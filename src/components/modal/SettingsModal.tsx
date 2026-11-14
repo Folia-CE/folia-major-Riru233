@@ -1229,7 +1229,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                             closeLabel={t('ui.close')}
                         />
                     )}
-                    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                    <div className="flex min-h-0 min-w-0 flex-1 flex-col  bg-[var(--bg-color)]">
                         <PageHeader
                             title={isSearching
                                 ? t('options.settingsSearchTitle')

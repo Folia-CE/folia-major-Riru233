@@ -52,7 +52,7 @@ export const SettingsSideList: React.FC<SettingsSideListProps> = ({
     };
 
     return (
-        <aside className={`flex h-full min-h-0 w-full shrink-0 flex-col bg-[var(--st-side)] px-2.5 pb-2.5 pt-3.5 ${showSearch ? 'border-r border-[var(--st-line)]' : ''}`}>
+        <aside className={`flex h-full min-h-0 w-full backdrop-blur-[40px] shrink-0 flex-col bg-transparent px-2.5 pb-2.5 pt-3.5 ${showSearch ? 'border-r border-[var(--st-line)]' : ''}`}>
             {showSearch && (
                 <SettingsSearchField
                     query={query}
