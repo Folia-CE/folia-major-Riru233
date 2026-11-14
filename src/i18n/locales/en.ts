@@ -1962,6 +1962,9 @@ export default {
     "searchDatabase": "SEARCH DATABASE...",
     "searchLocal": "Search local songs...",
     "searchNavidrome": "Search navidrome",
+    "searchHistory": "Recent searches",
+    "searchHistoryClear": "Clear",
+    "searchHistoryRemove": "Remove \"{{query}}\" from history",
     "gridSearchPlaceholder": "Filter songs...",
     "gridSearchNoResults": "No matching songs",
     "gridBatchSelectionSummary": {
