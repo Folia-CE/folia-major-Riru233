@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { SearchKind } from '../../../stores/useSearchNavigationStore';
+import { useGlass } from '@/shinoinject/useGlass';
 
 // src/components/app/search/SearchComposition.tsx
 // 搜索页底下的至上主义构图（只是装饰，屏幕阅读器跳过）。几何形的站位按搜的种类换（search.css 的 data-search-kind），
@@ -33,7 +34,6 @@ const SearchComposition: React.FC<SearchCompositionProps> = ({ kind, query, sour
         setSweep(count => count + 1);
     }, [source]);
     const pose = STAGE_POSES[Math.max(0, sourceIndex) % STAGE_POSES.length];
-
     return (
         <div className="search-composition" data-search-kind={kind} aria-hidden="true">
             <div
