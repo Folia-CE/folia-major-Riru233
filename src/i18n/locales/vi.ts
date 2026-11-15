@@ -2023,6 +2023,7 @@ export default {
     "radio": "Radio",
     "radioTab": "Radio",
     "explore": "Khám phá",
+    "welfare": "Ưu đãi",
     "exploreRefresh": "Đổi danh sách khác",
     "exploreMore": "Xem thêm",
     "exploreEmpty": "Chưa có nội dung đề xuất",

@@ -163,7 +163,7 @@ export interface LyricRenderOverride {
   antialias: 'global' | 'on' | 'off';
 }
 
-export type HomeViewTab = 'playlist' | 'local' | 'albums' | 'navidrome' | 'radio' | 'explore';
+export type HomeViewTab = 'playlist' | 'local' | 'albums' | 'navidrome' | 'radio' | 'explore' | 'welfare';
 
 export type PlaybackContext = 'main' | 'stage';
 export type StageSource = 'stage-api' | 'now-playing' | 'playercap';

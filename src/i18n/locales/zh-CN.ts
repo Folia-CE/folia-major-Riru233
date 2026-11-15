@@ -2027,6 +2027,7 @@ export default {
     "radio": "电台",
     "radioTab": "推荐",
     "explore": "探索",
+    "welfare": "福利",
     "exploreRefresh": "换一批",
     "exploreMore": "更多",
     "exploreEmpty": "暂时没有推荐内容",

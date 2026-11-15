@@ -2027,6 +2027,7 @@ export default {
     "radio": "Radio",
     "radioTab": "Radio",
     "explore": "Jelajahi",
+    "welfare": "Bonus",
     "exploreRefresh": "Muat ulang",
     "exploreMore": "Lainnya",
     "exploreEmpty": "Belum ada rekomendasi",

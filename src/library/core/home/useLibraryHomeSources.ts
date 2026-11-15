@@ -37,6 +37,7 @@ export const useLibraryHomeSources = ({
     playlists,
     cloudPlaylist = null,
     navidromeEnabled = false,
+    includeWelfare = false,
 }: {
     /** 在线账户 controller：当前平台与它的账户摘要来自快照（未变时身份稳定）。 */
     account: LibraryAccountController;
@@ -45,6 +46,8 @@ export const useLibraryHomeSources = ({
     playlists: ProviderCollection[];
     cloudPlaylist?: ProviderCollection | null;
     navidromeEnabled?: boolean;
+    /** 这套 suite 的首页有没有「福利」页签（网格与 bravais 有，TUI、vertical 没有）。 */
+    includeWelfare?: boolean;
 }): LibraryHomeSources => {
     const { t } = useTranslation();
     const { tab, setTab } = useSearchNavigationStore(useShallow(state => ({
@@ -87,13 +90,19 @@ export const useLibraryHomeSources = ({
         if (tab === 'explore' && !online.canUseExplore) setTab('playlist');
     }, [online.canUseExplore, setTab, tab]);
 
+    // 换到没有「福利」页的 suite（TUI、vertical）时，记着的 welfare 页签回到歌单。
+    useEffect(() => {
+        if (tab === 'welfare' && !includeWelfare) setTab('playlist');
+    }, [includeWelfare, setTab, tab]);
+
     const localAvailability = getLocalLibraryAvailability();
     const tabs = useMemo(() => translateHomeTabs(resolveHomeTabs({
         visibility,
         navidromeEnabled,
         online,
+        includeWelfare,
         localAvailability: { supported: localAvailability.supported, reason: localAvailability.reason },
-    }), t), [localAvailability.reason, localAvailability.supported, navidromeEnabled, online, t, visibility]);
+    }), t), [includeWelfare, localAvailability.reason, localAvailability.supported, navidromeEnabled, online, t, visibility]);
 
     const personalFmModeLabel = online.hasPersonalFmModes
         ? getPersonalFmSelectionLabel(personalFmSelection, (key, fallback) => t(key, fallback ?? ''), catalog)

@@ -9,6 +9,7 @@ import LocalGrid3DView from './LocalGrid3DView';
 import NavidromeGrid3DView from './NavidromeGrid3DView';
 import { useGrid3DTabKeys } from './useGrid3DTabKeys';
 import DesktopGrid3DSurface from './DesktopGrid3DSurface';
+import WelfareGrid3DSurface from './WelfareGrid3DSurface';
 import OnlineProviderAccountlessPanel from '../account/OnlineProviderAccountlessPanel';
 import HomeLoginPanel from '../../../../components/login/HomeLoginPanel';
 import SwitcherPill from '../../../../components/login/SwitcherPill';
@@ -196,6 +197,7 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
         playlists,
         cloudPlaylist,
         navidromeEnabled,
+        includeWelfare: true,
     });
     const { tab: homeViewTab, setTab: setHomeViewTab, isOnlineTab, online, tabs: homeTabs } = homeSources;
     const activeProviderId = online.providerId;
@@ -555,6 +557,24 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                         onOpenGridView={onOpenGridView}
                         directoryActions={directoryActions}
                         declaredHomeActions={declaredActions}
+                    />
+                </div>
+            );
+        }
+        if (key === 'welfare') {
+            return (
+                <div className="w-full h-full flex-1">
+                    <WelfareGrid3DSurface
+                        title={t('home.welfare')}
+                        mapButtonLabel={t('home.welfare')}
+                        theme={theme}
+                        isDaylight={isDaylight}
+                        isInteractive={interactive}
+                        hasFloatingPlayer={Boolean(currentTrack)}
+                        directoryKey={dirKey}
+                        hiddenScope={scope}
+                        declaredActions={declaredActions}
+                        onPlaySong={onPlaySong}
                     />
                 </div>
             );

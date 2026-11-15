@@ -2025,6 +2025,7 @@ export default {
     "radio": "Radio",
     "radioTab": "Radio",
     "explore": "Explore",
+    "welfare": "Welfare",
     "exploreRefresh": "Refresh",
     "exploreMore": "More",
     "exploreEmpty": "Nothing to recommend yet",
