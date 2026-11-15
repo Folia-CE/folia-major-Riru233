@@ -613,6 +613,7 @@ export default {
     "syncFailed": "同步失败",
     "loginExpired": "登录状态已失效，请重新登录",
     "songPreviewOnly": "当前账号仅可试听此歌曲",
+    "songWelfareBlgWorlds2026": "福利歌曲：免登录、免会员播放整首，庆祝 BLG 夺得 2026 年英雄联盟全球总决赛冠军",
     "songVipFullUnavailable": "第三方播放器暂时无法获取完整VIP歌曲",
     "songSubscriptionRequired": "{{provider}}需要会员才能播放",
     "songRegionRestricted": "仅限中国大陆网络播放",

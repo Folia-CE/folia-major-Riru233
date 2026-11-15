@@ -613,6 +613,7 @@ export default {
     "syncFailed": "Sinkronisasi gagal",
     "loginExpired": "Login kedaluwarsa. Silakan login lagi",
     "songPreviewOnly": "Akun ini hanya dapat memutar pratinjau",
+    "songWelfareBlgWorlds2026": "Lagu bonus: diputar penuh tanpa login atau VIP, merayakan kemenangan BLG di Kejuaraan Dunia League of Legends 2026",
     "songVipFullUnavailable": "Pemutar pihak ketiga untuk sementara tidak dapat memperoleh lagu VIP lengkap",
     "songSubscriptionRequired": "Perlu akun {{provider}} berbayar",
     "songRegionRestricted": "Hanya dapat diputar dari jaringan Tiongkok daratan",

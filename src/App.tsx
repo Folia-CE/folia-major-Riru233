@@ -59,6 +59,7 @@ import { useAutoLyricSegmentation } from './hooks/useAutoLyricSegmentation';
 import { handleOnlineMediaFailure } from './components/app/playback/handleOnlineMediaFailure';
 import { createOnlineRecoveryController } from './components/app/playback/restore/createOnlineRecoveryController';
 import { notePreviewPlaying } from './components/app/playback/source/previewNotice';
+import { noteWelfareSongPlaying } from './components/app/playback/source/welfareNotice';
 import { persistPlaybackCache } from './components/app/playback/persistPlaybackCache';
 import { useAppOverlaysModel } from './components/app/overlays/useAppOverlaysModel';
 import { resolveNextUpTrack } from './components/app/overlays/now-playing-toast/resolveNextUpTrack';
@@ -2538,6 +2539,8 @@ export default function App() {
                 setPlayerState(PlayerState.PLAYING);
                 // A preview clip is told of as it is heard, once per start of the song.
                 notePreviewPlaying(e.currentTarget.currentSrc, t);
+                // 福利歌曲（仓库自带音频）不向平台要地址：开始放的时候说明为什么能整首免费听。
+                noteWelfareSongPlaying(t);
                 // Last chance to refuse the blend, now that we know when this deck really started.
                 automix.handleActiveDeckPlaying();
             }}

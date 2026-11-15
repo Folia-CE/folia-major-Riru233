@@ -613,6 +613,7 @@ export default {
     "syncFailed": "Sync failed",
     "loginExpired": "Login expired. Please sign in again",
     "songPreviewOnly": "This account can only play a preview",
+    "songWelfareBlgWorlds2026": "Welfare track: full playback without sign-in or VIP, to celebrate BLG winning the 2026 League of Legends World Championship",
     "songVipFullUnavailable": "Third-party players can't get full VIP songs for now",
     "songSubscriptionRequired": "Paid {{provider}} account required",
     "songRegionRestricted": "Plays on mainland China networks only",
