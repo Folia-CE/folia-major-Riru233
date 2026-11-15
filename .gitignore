@@ -109,3 +109,7 @@ public/nebbia-strokes.json
 .coven/
 # ignore workbuddy
 .workbuddy/
+
+# assets闭源
+assets/music
+assets/banners
