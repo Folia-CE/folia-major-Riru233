@@ -87,6 +87,7 @@ const { createQqAuthSessionRepository } = require('./qq/qqAuthSessionRepository.
 const { DEFAULT_DISCORD_APPLICATION_ID, createDiscordPresenceController } = require('./discordPresence.cjs');
 const { createVoiceInputPauseMonitor } = require('./voiceInputPause.cjs');
 const { createWindowSystemMenuGuard } = require('./windowSystemMenu.cjs');
+const { createDevToolsShortcutGuard } = require('./devToolsShortcutGuard.cjs');
 const { createMacDockMenu } = require('./macDockMenu.cjs');
 const { createWindowsThumbar } = require('./windowsThumbar.cjs');
 const { createDisplaySleepBlocker } = require('./displaySleepBlocker.cjs');
@@ -6682,6 +6683,13 @@ app.on('browser-window-created', (_event, window) => windowSystemMenuGuard.attac
 ipcMain.on('key-capture-active', (event, active) => {
   windowSystemMenuGuard.setCapturing(event.sender.id, active === true);
 });
+
+// 打包后的窗口不许开 DevTools：Ctrl+Shift+I（macOS 的 Cmd+Alt+I）在页面和菜单快捷键之前被拦下
+// （devToolsShortcutGuard.cjs）。开发运行时照旧——建窗时 main.cjs 自己 openDevTools。
+if (!isElectronDevRuntime()) {
+  const devToolsShortcutGuard = createDevToolsShortcutGuard();
+  app.on('browser-window-created', (_event, window) => devToolsShortcutGuard.attach(window));
+}
 
 app.on('window-all-closed', () => {
   if (isSwappingMainWindow) {
