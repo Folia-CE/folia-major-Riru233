@@ -4330,6 +4330,21 @@ export default {
         "description": "When signed in, your own private playlists now load their songs, with real paging. Self-hosted backends must run qq-music-api 3.1.2 or later; older backends fall back automatically, and a playlist that cannot be read now says it is not public instead of silently showing as empty."
       }
     },
+    "v0_7_28_9": {
+      "intro": "This is an early look at 0.7.29L; the installer carries the numeric version 0.7.28.9. To mark BLG winning the 2026 League of Legends World Championship, the library gains a Welfare tab with five tournament themes you can play in full without signing in. A few 0.7.29 changes are here early as well.",
+      "banner": {
+        "alt": "Congratulations to BLG on winning the 2026 League of Legends World Championship",
+        "hint": "Open the Welfare tab"
+      },
+      "blgWelfare": {
+        "title": "BLG championship welfare songs",
+        "description": "A new Welfare tab in the library, on both the grid and the Bravais wall: RISE, Legends Never Die (including the Alan Walker remix), Flash Funk and the Camelot remix play in full — no sign-in, no provider preview clip. Click a cover to play; the queue is the whole set."
+      },
+      "preview0729": {
+        "title": "A taste of 0.7.29",
+        "description": "Some of 0.7.29 is already in this build: the karaoke lyric style with opening song info, search history, one-round-no-repeat shuffling, the compact settings drawer, a redesigned scratchpad, and faster local library imports. The rest arrives with the 0.7.29 release."
+      }
+    },
     "v0_7_28": {
       "intro": "Welcome to 0.7.28, the Mimiambol Update—a major update. It adds the cinema hall scene and Shino Lab, a docked bottom player bar, a refreshed library grid, a new app icon, window controls on either side, and new options for several lyric styles.",
       "scenes": {

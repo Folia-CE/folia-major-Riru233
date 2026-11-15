@@ -4299,6 +4299,21 @@ export default {
         "description": "Sau khi đăng nhập, danh sách phát riêng tư của bạn nay có thể tải bài hát với phân trang thực tế. Máy chủ tự lưu trữ cần chạy qq-music-api 3.1.2 trở lên; phiên bản cũ hơn sẽ tự động quay về cơ chế dự phòng, và danh sách phát không đọc được sẽ báo rõ là danh sách không công khai thay vì hiển thị trống."
       }
     },
+    "v0_7_28_9": {
+      "intro": "Đây là bản dùng thử sớm của 0.7.29L; gói cài đặt mang số phiên bản 0.7.28.9. Để chúc mừng BLG vô địch Chung kết Thế giới Liên Minh Huyền Thoại 2026, thư viện có thêm tab Phúc lợi với năm ca khúc chủ đề được phát trọn bài mà không cần đăng nhập. Một phần thay đổi của 0.7.29 cũng đã có sẵn ở đây.",
+      "banner": {
+        "alt": "Chúc mừng BLG vô địch Chung kết Thế giới Liên Minh Huyền Thoại 2026",
+        "hint": "Mở tab Phúc lợi"
+      },
+      "blgWelfare": {
+        "title": "Ca khúc phúc lợi mừng BLG vô địch",
+        "description": "Tab Phúc lợi mới trong thư viện, có ở cả dạng lưới và tường Bravais: RISE, Legends Never Die (kể cả bản remix của Alan Walker), Flash Funk và bản remix Camelot được phát trọn bài — không cần đăng nhập, không bị cắt đoạn nghe thử. Bấm vào bìa để phát; hàng đợi là toàn bộ tab."
+      },
+      "preview0729": {
+        "title": "Dùng thử 0.7.29",
+        "description": "Một phần của 0.7.29 đã có trong bản này: kiểu lời karaoke kèm thông tin bài hát ở đầu, lịch sử tìm kiếm, xáo trộn «một vòng không lặp», ngăn cài đặt thu gọn, sổ tay được thiết kế lại và nhập thư viện cục bộ nhanh hơn. Phần còn lại sẽ đến trong bản 0.7.29."
+      }
+    },
     "v0_7_28": {
       "intro": "Chào mừng bạn đến với 0.7.28, Mimiambol Update—một bản cập nhật lớn. Bản này thêm cảnh rạp chiếu phim và Phòng thí nghiệm Shino, thanh phát nhạc neo đáy, lưới thư viện với phần đầu trang mới, biểu tượng ứng dụng mới, nút cửa sổ đặt được bên trái hoặc phải, và tùy chọn mới cho một số kiểu lời bài hát.",
       "scenes": {

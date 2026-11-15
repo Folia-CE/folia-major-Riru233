@@ -4332,6 +4332,21 @@ export default {
         "description": "Setelah masuk, playlist pribadi buatan Anda kini dapat memuat lagu dengan paging sungguhan. Backend yang di-host sendiri harus memakai qq-music-api 3.1.2 atau lebih baru; backend lama beralih otomatis, dan playlist yang tidak dapat dibaca kini menjelaskan bahwa playlist itu tidak publik, alih-alih tampil kosong tanpa keterangan."
       }
     },
+    "v0_7_28_9": {
+      "intro": "Ini adalah cuplikan awal 0.7.29L; paket pemasangnya memakai nomor versi 0.7.28.9. Untuk merayakan BLG menjuarai Kejuaraan Dunia League of Legends 2026, pustaka mendapat tab Kesejahteraan berisi lima lagu tema turnamen yang bisa diputar penuh tanpa masuk akun. Sebagian perubahan 0.7.29 juga sudah ada di sini.",
+      "banner": {
+        "alt": "Selamat kepada BLG atas kemenangan di Kejuaraan Dunia League of Legends 2026",
+        "hint": "Buka tab Kesejahteraan"
+      },
+      "blgWelfare": {
+        "title": "Lagu kesejahteraan juara BLG",
+        "description": "Tab Kesejahteraan baru di pustaka, tersedia di grid maupun dinding Bravais: RISE, Legends Never Die (termasuk remix Alan Walker), Flash Funk, dan remix Camelot diputar penuh — tanpa masuk akun dan tanpa potongan pratinjau platform. Klik sampulnya untuk memutar; antreannya seluruh isi tab."
+      },
+      "preview0729": {
+        "title": "Cicipi 0.7.29",
+        "description": "Sebagian 0.7.29 sudah ada di versi ini: gaya lirik karaoke dengan info lagu di awal, riwayat pencarian, acak «satu putaran tanpa ulang», laci pengaturan mode ringkas, buku catatan yang didesain ulang, dan impor pustaka lokal yang lebih cepat. Sisanya menyusul di rilis 0.7.29."
+      }
+    },
     "v0_7_28": {
       "intro": "Selamat datang di 0.7.28, Mimiambol Update—sebuah pembaruan besar. Versi ini menghadirkan adegan bioskop dan Lab Shino, bilah pemutar bawah yang menempel, grid pustaka dengan kepala halaman baru, ikon aplikasi baru, tombol jendela di kiri atau kanan, dan opsi baru untuk beberapa gaya lirik.",
       "scenes": {
