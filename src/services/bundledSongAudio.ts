@@ -1,11 +1,11 @@
 // src/services/bundledSongAudio.ts
 // 仓库自带音频：这几首歌直接放打包进应用的文件，不向平台要播放地址。不经过平台也就没有
 // 登录、会员和试听片段这些限制（试听是平台按账号给的一段地址，见 neteaseProvider 的 freeTrialInfo）。
-// 表由 assets/songs/welfare-songs.json 生成：里面每条带 `audio` 的歌，就去 assets/music 找那个文件名，
+// 表由 assets/music/welfare-songs.json 生成：里面每条带 `audio` 的歌，就去 assets/music 找那个文件名，
 // 键仍是 `<平台 id>:<歌曲 id>`。加歌只改 JSON + 落一个 mp3，这里不用动。
 // 带 `welfareReasonKey` 的是福利歌曲：播放时会把这首为什么免登录放整首说一句（welfareNotice.ts）。
 
-import songData from '../../assets/songs/welfare-songs.json';
+import songData from '../../assets/music/welfare-songs.json';
 import { createSafeObjectUrl } from '../utils/blobGuards';
 import { WELFARE_REASON_KEY } from './welfareSongs';
 

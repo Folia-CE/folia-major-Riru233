@@ -1,6 +1,6 @@
 // src/services/welfareSongs.ts
 // 福利歌曲：仓库自带整首音频的那几首（音频表在 bundledSongAudio.ts，键是 `平台:歌曲 id`）。元数据本身写在
-// assets/songs/welfare-songs.json —— 歌名、歌手、专辑、封面、时长、音频文件名都在那边，加歌只改 JSON 不用动代码。
+// assets/music/welfare-songs.json —— 歌名、歌手、专辑、封面、时长、音频文件名都在那边，加歌只改 JSON 不用动代码。
 // 这里负责把 JSON 的「文件名」换成打包后的地址（封面用 import.meta.glob 一次性收集），再按组交给界面。
 //
 // 福利分两组（首页福利页先给两组的入口卡，点进去才是歌）：
@@ -9,7 +9,7 @@
 //   （入口卡都不画，歌也不再作为福利免试听）。窗口按本机日期算，含首尾两天。
 
 import type { Artist, SongResult } from '../types';
-import songData from '../../assets/songs/welfare-songs.json';
+import songData from '../../assets/music/welfare-songs.json';
 
 /** 这几首为什么能免登录放整首：文案在 i18n 的 status 下，四语种都有。单首想换说法就在 JSON 里加 reasonKey。 */
 export const WELFARE_REASON_KEY = 'status.songWelfareBlgWorlds2026';
