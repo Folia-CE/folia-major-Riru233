@@ -1,11 +1,12 @@
-// src/library/core/home/welfareHome.ts
+// src/library/app/welfareHome.ts
 // 首页「福利」页签的卡片：福利歌曲（services/welfareSongs 的元数据）投影成首页卡片，网格与 bravais 同用一份。
 // 卡片是「一首歌」而不是集合：type 记作 song，raw 带着整条 SongResult，点它就是播放——两套首页都按
 // 「点了直接放」处理，不进任何新的一层。id 带 `welfare:` 前缀，免得与在线歌单的 id 撞在同一个目录会话里。
+// 放在 app（装配层）而不是 core：core 的纯变换不读 services，而这层读的是自带音频的歌曲元数据。
 
-import type { SongResult } from '../../../types';
-import { WELFARE_SONGS, findWelfareSong } from '../../../services/welfareSongs';
-import type { LibraryHomeCard } from './homeModel.contract';
+import type { SongResult } from '../../types';
+import { WELFARE_SONGS, findWelfareSong } from '../../services/welfareSongs';
+import type { LibraryHomeCard } from '../core/home/homeModel.contract';
 
 const WELFARE_CARD_PREFIX = 'welfare:';
 

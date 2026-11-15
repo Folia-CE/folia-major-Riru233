@@ -8,6 +8,8 @@ import type { Artist, SongResult } from '../types';
 import coverLegendsNeverDieRemix from '../../assets/music/covers/legends-never-die-alan-walker-remix.jpg?url';
 import coverLegendsNeverDie from '../../assets/music/covers/legends-never-die.jpg?url';
 import coverFlashFunk from '../../assets/music/covers/flash-funk.jpg?url';
+import coverRise from '../../assets/music/covers/rise.jpg?url';
+import coverCamelot from '../../assets/music/covers/camelot-rise-and-fall-djyaha-remix.jpg?url';
 
 /** 这几首为什么能免登录放整首：文案在 i18n 的 status 下，四语种都有。 */
 export const WELFARE_REASON_KEY = 'status.songWelfareBlgWorlds2026';
@@ -21,7 +23,7 @@ export type WelfareSongEntry = {
 const artist = (id: number, name: string): Artist => ({ id, name });
 
 /**
- * 福利歌曲（顺序就是专区的顺序）。三首都是网易云的歌，`sourceRef` 让播放链路认得出平台，
+ * 福利歌曲（顺序就是专区的顺序）。五首都是网易云的歌，`sourceRef` 让播放链路认得出平台，
  * 取音频时再由 bundledSongAudio 命中仓库里的那份文件。
  */
 export const WELFARE_SONGS: readonly WelfareSongEntry[] = [
@@ -78,6 +80,41 @@ export const WELFARE_SONGS: readonly WelfareSongEntry[] = [
             },
             durationMs: 221408,
             sourceRef: { kind: 'online', providerId: 'netease', mediaId: '400161903' },
+        },
+    },
+    {
+        reasonKey: WELFARE_REASON_KEY,
+        song: {
+            id: 1313107065,
+            name: 'RISE',
+            artists: [
+                artist(1047337, '英雄联盟'),
+                artist(68192, 'Mako'),
+                artist(213073, 'The Word Alive'),
+                artist(102954, 'The Glitch Mob'),
+            ],
+            album: {
+                id: 73471912,
+                name: 'RISE',
+                coverUrl: coverRise,
+            },
+            durationMs: 192881,
+            sourceRef: { kind: 'online', providerId: 'netease', mediaId: '1313107065' },
+        },
+    },
+    {
+        reasonKey: WELFARE_REASON_KEY,
+        song: {
+            id: 478419032,
+            name: 'Camelot - Rise and Fall[DjYaha Remix2017]',
+            artists: [artist(12064126, 'DjYaha')],
+            album: {
+                id: 35503720,
+                name: 'Camelot-Rise and Fall[DjYaha Remix2017]',
+                coverUrl: coverCamelot,
+            },
+            durationMs: 370370,
+            sourceRef: { kind: 'online', providerId: 'netease', mediaId: '478419032' },
         },
     },
 ];

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import type { SongResult } from '../../../types';
 import type { LibraryHiddenScope } from '../../core/directory/directory.contract';
 import type { LibraryDeclaredActions } from '../../core/suite/suite.contract';
-import { welfareHomeCards, welfareSongOfCard } from '../../core/home/welfareHome';
+import { welfareHomeCards, welfareSongOfCard } from '../../app/welfareHome';
 import { welfareSongList } from '../../../services/welfareSongs';
 import BravaisHomeDirectory from './BravaisHomeDirectory';
 import type { BravaisHomeChrome } from './useBravaisHomeChrome';

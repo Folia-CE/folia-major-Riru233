@@ -7,6 +7,8 @@
 import legendsNeverDieRemixUrl from '../../assets/music/legends-never-die-alan-walker-remix.mp3?url';
 import legendsNeverDieUrl from '../../assets/music/legends-never-die.mp3?url';
 import flashFunkUrl from '../../assets/music/flash-funk.mp3?url';
+import riseUrl from '../../assets/music/rise.mp3?url';
+import camelotRiseAndFallUrl from '../../assets/music/camelot-rise-and-fall-djyaha-remix.mp3?url';
 import { createSafeObjectUrl } from '../utils/blobGuards';
 
 type BundledSongAudio = {
@@ -32,6 +34,18 @@ const BUNDLED_SONG_AUDIO: Readonly<Record<string, BundledSongAudio>> = {
     // https://music.163.com/#/song?id=400161903
     'netease:400161903': {
         url: flashFunkUrl,
+        welfareReasonKey: 'status.songWelfareBlgWorlds2026',
+    },
+    // RISE - 英雄联盟, Mako, The Word Alive, The Glitch Mob
+    // https://music.163.com/#/song?id=1313107065
+    'netease:1313107065': {
+        url: riseUrl,
+        welfareReasonKey: 'status.songWelfareBlgWorlds2026',
+    },
+    // Camelot - Rise and Fall[DjYaha Remix2017] - DjYaha
+    // https://music.163.com/#/song?id=478419032
+    'netease:478419032': {
+        url: camelotRiseAndFallUrl,
         welfareReasonKey: 'status.songWelfareBlgWorlds2026',
     },
 };

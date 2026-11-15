@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import type { SongResult, Theme } from '../../../../types';
 import type { LibraryHiddenScope } from '../../../core/directory/directory.contract';
 import type { LibraryDeclaredActions } from '../../../core/suite/suite.contract';
-import { welfareHomeCards, welfareSongOfCard } from '../../../core/home/welfareHome';
+import { welfareHomeCards, welfareSongOfCard } from '../../../app/welfareHome';
 import { welfareSongList } from '../../../../services/welfareSongs';
 import DesktopGrid3DSurface from './DesktopGrid3DSurface';
 import type { Grid3DSliderItem } from './Grid3DSlider';
@@ -38,7 +38,7 @@ const WelfareGrid3DSurface: React.FC<WelfareGrid3DSurfaceProps> = ({
     onPlaySong,
 }) => {
     const [focusedIndex, setFocusedIndex] = useState(0);
-    // 卡片内容固定（三首歌写死在 services/welfareSongs）：每次渲染重建数组只会让墙白白重排。
+    // 卡片内容固定（歌单写死在 services/welfareSongs）：每次渲染重建数组只会让墙白白重排。
     const items = useMemo<Grid3DSliderItem[]>(() => welfareHomeCards().map(card => ({
         id: card.id,
         name: card.name,
