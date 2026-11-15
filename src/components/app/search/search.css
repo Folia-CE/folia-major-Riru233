@@ -53,9 +53,8 @@
 }
 
 .search-figure.is-slab > i {
-    background: var(--search-accent);
+    background: color-mix(in srgb, var(--search-accent) 30%, transparent 70%);
     clip-path: polygon(22% 0, 100% 0, 100% 64%, 48% 82%);
-    opacity: 0.92;
 }
 
 /* 墨色的空心圆与圆里偏心的实心小圆。 */
@@ -365,7 +364,7 @@
 
 .search-kind-label {
     font-size: clamp(22px, 3.2vw, 34px);
-    font-weight: 900;
+    font-weight: lighter;
     line-height: 1;
     letter-spacing: -0.01em;
 }

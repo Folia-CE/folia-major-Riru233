@@ -19,6 +19,7 @@ import { useSearchSources } from './searchSources';
 import { collectToScratchpad } from '../../../stores/useScratchpadStore';
 import { canOpenPlaylistPickerFor, openAddSongsToPlaylist } from '../../../stores/useAddToPlaylistStore';
 import './search.css';
+import { useGlass } from '@/shinoinject/useGlass';
 
 // src/components/app/search/SearchWorkspace.tsx
 // 搜索页：搜索框、来源（当前在线平台、已登录与无需登录的在线平台、有歌时的本地、配好了的 Navidrome，见 searchSources）、
@@ -120,7 +121,7 @@ const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
     const saveTrackToPlaylist = useCallback((track: UnifiedSong) => {
         if (canOpenPlaylistPickerFor(track)) openAddSongsToPlaylist([track]);
     }, []);
-    const paperColor = isDaylight ? 'rgba(250,250,250,0.96)' : 'rgba(8,8,10,0.94)';
+    const paperColor = isDaylight ? 'rgba(250,250,250,0.3)' : 'rgba(8,8,10,0.3)';
     const countLabel = resultTotal !== null && resultTotal >= resultCount
         ? String(resultTotal)
         : `${resultCount}${hasMore ? '+' : ''}`;
@@ -144,21 +145,21 @@ const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [hasCollection, isSearchOpen, onClose]);
-
+    useGlass();
     return (
         <AnimatePresence>
             {isSearchOpen && (
                 <motion.section
-                    initial={{ opacity: 0, y: -28 }}
+                    data-glass data-glass-light data-glass-strength="1" data-glass-bend="80" data-glass-blur="3"
+                    initial={{ opacity: 0, y: 28 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -28 }}
-                    className={`fixed inset-0 flex flex-col overflow-hidden px-3 py-4 sm:px-6 sm:py-6 ${
-                        hasCollection ? 'z-[5]' : 'z-500'
+                    exit={{ opacity: 0, y: 28 }}
+                    className={`search-workspace fixed inset-0 flex flex-col overflow-hidden px-4 py-5 sm:px-8 sm:py-7 ${
+                        hasCollection ? 'z-[5]' : 'z-50'
                     }`}
                     style={{
                         color: theme.primaryColor,
                         backgroundColor: paperColor,
-                        backdropFilter: 'blur(24px)',
                         '--search-ink': theme.primaryColor,
                         '--search-accent': theme.accentColor,
                         '--search-paper': isDaylight ? '#fafafa' : '#08080a',
