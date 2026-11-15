@@ -2026,6 +2026,12 @@ export default {
     "radioTab": "Radio",
     "explore": "Explore",
     "welfare": "Welfare",
+    "welfareChampion": "We are the champions!",
+    "welfareChampionSubtitle": "Congratulations to BLG for winning the 2026 League of Legends World Championship!",
+    "welfarePermanent": "Version archive",
+    "welfareLimited": "Limited-time welfare",
+    "welfarePermanentHint": "Classic tracks, in 0.7.29 only",
+    "welfareLimitedHint": "Free in full until 2026-12-15",
     "exploreRefresh": "Refresh",
     "exploreMore": "More",
     "exploreEmpty": "Nothing to recommend yet",
@@ -4331,14 +4337,14 @@ export default {
       }
     },
     "v0_7_28_9": {
-      "intro": "This is an early look at 0.7.29L; the installer carries the numeric version 0.7.28.9. To mark BLG winning the 2026 League of Legends World Championship, the library gains a Welfare tab with five tournament themes you can play in full without signing in. A few 0.7.29 changes are here early as well.",
+      "intro": "This is an early look at 0.7.29L; the installer carries the numeric version 0.7.28.9. To mark BLG winning the 2026 League of Legends World Championship, the library gains a Welfare tab where League of Legends songs play in full without signing in. A few 0.7.29 changes are here early as well.",
       "banner": {
         "alt": "Congratulations to BLG on winning the 2026 League of Legends World Championship",
         "hint": "Open the Welfare tab"
       },
       "blgWelfare": {
         "title": "BLG championship welfare songs",
-        "description": "A new Welfare tab in the library, on both the grid and the Bravais wall: RISE, Legends Never Die (including the Alan Walker remix), Flash Funk and the Camelot remix play in full — no sign-in, no provider preview clip. Click a cover to play; the queue is the whole set."
+        "description": "A new Welfare tab in the library, on both the grid and the Bravais wall: League of Legends songs play in full — no sign-in, no provider preview clip. Click a cover to play; the queue is the whole group."
       },
       "preview0729": {
         "title": "A taste of 0.7.29",

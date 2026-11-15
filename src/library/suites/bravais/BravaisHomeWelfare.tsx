@@ -1,18 +1,17 @@
-import React, { useMemo } from 'react';
-import type { SongResult } from '../../../types';
+import React, { useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { LibraryHiddenScope } from '../../core/directory/directory.contract';
 import type { LibraryDeclaredActions } from '../../core/suite/suite.contract';
-import { welfareHomeCards, welfareSongOfCard } from '../../app/welfareHome';
-import { welfareSongList } from '../../../services/welfareSongs';
+import type { LibraryHomeCard } from '../../core/home/homeModel.contract';
+import type { LibraryCollectionDescriptor } from '../../core/collection/collection.contract';
+import { welfareGroupCards, welfareGroupOfCard, welfareGroupCollection } from '../../app/welfareHome';
 import BravaisHomeDirectory from './BravaisHomeDirectory';
 import type { BravaisHomeChrome } from './useBravaisHomeChrome';
 
 // src/library/suites/bravais/BravaisHomeWelfare.tsx
-// bravais 首页的「福利」页签：仓库自带整首音频的那几首歌铺成一面墙，卡片就是歌（core/home/welfareHome）。
-// 点一张直接放这首、队列是专区里的整串歌，不再进新的一层（isDirect，与私人 FM 卡同一种处理）；
-// 墙面、缝里的标题与元数据都沿用 BravaisHomeDirectory，和别的来源一致。
-
-const WELFARE_CARDS = welfareHomeCards();
+// bravais 首页的「福利」页签，与网格同一套结构：墙上只有两个分组的入口（版本典藏 / 限时福利），点开的是那一组的
+// 集合页（与别的歌单一样进集合层，曲目由福利集合的静态资源给出）——歌不在墙上铺。
+// 墙面、缝里的标题与元数据都沿用 BravaisHomeDirectory。
 
 const BravaisHomeWelfare: React.FC<{
     chrome: BravaisHomeChrome;
@@ -21,12 +20,15 @@ const BravaisHomeWelfare: React.FC<{
     declaredActions: LibraryDeclaredActions;
     isInteractive: boolean;
     label: string;
-    onPlaySong: (song: SongResult, playlistCtx?: SongResult[], isFmCall?: boolean) => void;
-}> = ({ chrome, directoryKey, hiddenScope, declaredActions, isInteractive, label, onPlaySong }) => {
-    const onOpen = useMemo(() => (card: { id: string | number }) => {
-        const song = welfareSongOfCard(card.id);
-        if (song) onPlaySong(song, welfareSongList(), false);
-    }, [onPlaySong]);
+    onOpenCollection: (collection: LibraryCollectionDescriptor) => void;
+}> = ({ chrome, directoryKey, hiddenScope, declaredActions, isInteractive, label, onOpenCollection }) => {
+    const { t } = useTranslation();
+    const items = useMemo<LibraryHomeCard[]>(() => welfareGroupCards(), []);
+    const onOpen = useCallback((card: LibraryHomeCard) => {
+        const group = welfareGroupOfCard(card.id);
+        // 入口卡 → 那一组的集合页（已过窗口的组没有集合，点了什么也不发生）。
+        if (group) onOpenCollection(welfareGroupCollection(group));
+    }, [onOpenCollection]);
     return (
         <BravaisHomeDirectory
             chrome={chrome}
@@ -35,14 +37,13 @@ const BravaisHomeWelfare: React.FC<{
             section="welfare"
             directoryKey={directoryKey}
             hiddenScope={hiddenScope}
-            items={WELFARE_CARDS}
+            items={items}
             isLoading={false}
             meta={label}
             panelTitle={label}
             declaredActions={declaredActions}
             isInteractive={isInteractive}
             onOpen={onOpen}
-            isDirect={() => true}
         />
     );
 };

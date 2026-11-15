@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, Loader2, Settings, LayoutDashboard, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -9,12 +9,14 @@ import LocalGrid3DView from './LocalGrid3DView';
 import NavidromeGrid3DView from './NavidromeGrid3DView';
 import { useGrid3DTabKeys } from './useGrid3DTabKeys';
 import DesktopGrid3DSurface from './DesktopGrid3DSurface';
-import WelfareGrid3DSurface from './WelfareGrid3DSurface';
+import WelfareChampionBanner from './WelfareChampionBanner';
+import { BLG_LOGO_URL } from './welfareChampionAssets';
 import OnlineProviderAccountlessPanel from '../account/OnlineProviderAccountlessPanel';
 import HomeLoginPanel from '../../../../components/login/HomeLoginPanel';
 import SwitcherPill from '../../../../components/login/SwitcherPill';
 import ExploreSurface from '../../../../components/app/home/explore/ExploreSurface';
 import { createOnlineGridViewCollection } from '../../../../components/app/home/gridViewCollectionAdapters';
+import { welfareCollectionOfCard, welfareGroupCards } from '../../../app/welfareHome';
 import { hasExploreWallEntries } from '../../../../components/app/lattice/exploreWall';
 import type { ProviderCollection, ProviderUser } from '../../../../types/onlineMusic';
 import { useThemeSettingsStore } from '../../../../stores/useThemeSettingsStore';
@@ -287,6 +289,14 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
     // If Personal FM is clicked, it plays Personal FM directly instead of opening GridView.
     const handleSelectCollectionCard = (card: LibraryHomeCard) => {
         void homeActions.openOnlineCard(card, activeProviderId, collection => onOpenGridView?.(collection));
+    };
+
+    // 福利页签只有两张分组入口卡（永久 / 限时），点一张就是打开那一组的集合页——歌在 GridView 里看，
+    // 不在墙上铺（集合描述带着整串曲目，见 app/welfareHome）。卡片与在线页签同一套结构，直接走 DesktopGrid3DSurface。
+    const welfareGroupItems = useMemo<LibraryHomeCard[]>(() => welfareGroupCards(), []);
+    const handleSelectWelfareCard = (card: LibraryHomeCard) => {
+        const collection = welfareCollectionOfCard(card.id);
+        if (collection) onOpenGridView?.(collection);
     };
 
     // 首页模型交给 core 的首页 surface 句柄：页签条，以及在线页签的列表（本地与 Navidrome 由各自的视图注册）。
@@ -562,20 +572,30 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
             );
         }
         if (key === 'welfare') {
+            // 只有分组入口卡，所以没有加载态、没有空态：入口卡就是这一页的全部内容。
+            // 顶部横幅整幅 100% 宽，占自己的一行；下面的墙面照旧撑满剩余高度。
             return (
-                <div className="w-full h-full flex-1">
-                    <WelfareGrid3DSurface
-                        title={t('home.welfare')}
-                        mapButtonLabel={t('home.welfare')}
-                        theme={theme}
-                        isDaylight={isDaylight}
-                        isInteractive={interactive}
-                        hasFloatingPlayer={Boolean(currentTrack)}
-                        directoryKey={dirKey}
-                        hiddenScope={scope}
-                        declaredActions={declaredActions}
-                        onPlaySong={onPlaySong}
-                    />
+                <div className="w-full h-full flex-1 flex flex-col min-h-0 gap-3">
+                    <WelfareChampionBanner />
+                    <div className="flex-1 min-h-0">
+                        <DesktopGrid3DSurface
+                            focusMemoryScope="welfare"
+                            title={t('home.welfare')}
+                            mapButtonLabel={t('home.allAlbums')}
+                            items={welfareGroupItems}
+                            focusedIndex={focusedIndex}
+                            onFocusedIndexChange={setFocusedIndex}
+                            onSelect={item => handleSelectWelfareCard(item as LibraryHomeCard)}
+                            isLoading={false}
+                            theme={theme}
+                            isDaylight={isDaylight}
+                            isInteractive={interactive}
+                            hasFloatingPlayer={Boolean(currentTrack)}
+                            playlistVisibilityScope={scope}
+                            directoryKey={dirKey}
+                            declaredHomeActions={declaredActions}
+                        />
+                    </div>
                 </div>
             );
         }
@@ -971,7 +991,18 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                                 }}
                                                 className={`relative inline-flex items-center justify-center px-4 py-1.5 rounded-full font-medium transition-colors duration-300 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-35 ${isCompact ? 'text-sm' : 'text-xs md:text-sm'} ${isActive ? activeTabBg : navPillInactiveText}`}
                                             >
-                                                <span className="relative z-20">{tab.label}</span>
+                                                {/* 福利页签不写字，用 BLG 队标：宽度锁在两个字符（2em，跟着这一排的字号走），
+                                                    这样它的胶囊宽度和旁边的「专辑」「本地」对齐，切页签时那一排不跳。 */}
+                                                <span className="relative z-20">
+                                                    {tab.key === 'welfare' ? (
+                                                        <img
+                                                            src={BLG_LOGO_URL}
+                                                            alt=""
+                                                            draggable={false}
+                                                            className="block h-4 w-[2em] select-none object-contain"
+                                                        />
+                                                    ) : tab.label}
+                                                </span>
                                             </button>
                                         </span>
                                     );

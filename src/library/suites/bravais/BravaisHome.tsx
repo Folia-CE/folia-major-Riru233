@@ -118,7 +118,7 @@ const BravaisHome: React.FC<LibraryHomeSurfaceProps> = (props) => {
                     declaredActions={declaredActions}
                     isInteractive={isInteractive}
                     label={tabLabel('welfare')}
-                    onPlaySong={props.onPlaySong}
+                    onOpenCollection={collection => onOpenGridView?.(collection)}
                 />
             ) : (
                 <BravaisHomeNavidrome {...common} meta={tabLabel('navidrome')} overview={homeResources.navidromeOverview} />

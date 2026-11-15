@@ -2027,7 +2027,13 @@ export default {
     "radio": "电台",
     "radioTab": "推荐",
     "explore": "探索",
-    "welfare": "福利",
+    "welfare": "BLG",
+    "welfareChampion": "我们是冠军！",
+    "welfareChampionSubtitle": "恭喜BLG战队在2026年英雄联盟全球总决赛中获得冠军！",
+    "welfarePermanent": "版本典藏",
+    "welfareLimited": "限时福利",
+    "welfarePermanentHint": "经典歌曲，0.7.29 版本限定",
+    "welfareLimitedHint": "限时免费，至 2026/12/15",
     "exploreRefresh": "换一批",
     "exploreMore": "更多",
     "exploreEmpty": "暂时没有推荐内容",
@@ -4333,14 +4339,14 @@ export default {
       }
     },
     "v0_7_28_9": {
-      "intro": "这是 0.7.29L 的尝鲜版，安装包上的数字版本是 0.7.28.9。为了 BLG 拿下 2026 年英雄联盟全球总决赛冠军，资料库新增「福利」页签：五首主题曲免登录听整首。另有 0.7.29 的一部分改动提前放进来试试。",
+      "intro": "这是 0.7.29L 的尝鲜版，安装包上的数字版本是 0.7.28.9。为了 BLG 拿下 2026 年英雄联盟全球总决赛冠军，资料库新增「福利」页签：英雄联盟相关的歌曲免费听整首，不用登录。另有 0.7.29 的一部分改动提前放进来试试。",
       "banner": {
         "alt": "恭喜 BLG 获得 2026 英雄联盟全球总决赛冠军",
         "hint": "点这里打开「福利」页签"
       },
       "blgWelfare": {
         "title": "BLG 夺冠福利歌曲",
-        "description": "资料库新增「福利」页签，网格与 Bravais 墙面都有：RISE、Legends Never Die（含 Alan Walker 混音）、Flash Funk、Camelot 混音五首赛事主题曲整首放，不用登录，也不受平台试听限制。点封面就开始播，队列就是专区里的整串歌。"
+        "description": "资料库新增「福利」页签，网格与 Bravais 墙面都有：英雄联盟相关的歌曲免费放整首，不用登录，也不受平台试听限制。点封面就开始播，队列就是那一组里的整串歌。"
       },
       "preview0729": {
         "title": "尝鲜 0.7.29",

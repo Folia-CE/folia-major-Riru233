@@ -2024,6 +2024,12 @@ export default {
     "radioTab": "Radio",
     "explore": "Khám phá",
     "welfare": "Ưu đãi",
+    "welfareChampion": "Chúng ta là nhà vô địch!",
+    "welfareChampionSubtitle": "Chúc mừng BLG vô địch Chung kết Thế giới Liên Minh Huyền Thoại 2026!",
+    "welfarePermanent": "Bộ sưu tập phiên bản",
+    "welfareLimited": "Ưu đãi có thời hạn",
+    "welfarePermanentHint": "Ca khúc kinh điển, chỉ có ở bản 0.7.29",
+    "welfareLimitedHint": "Miễn phí trọn bài đến 2026-12-15",
     "exploreRefresh": "Đổi danh sách khác",
     "exploreMore": "Xem thêm",
     "exploreEmpty": "Chưa có nội dung đề xuất",
@@ -4300,14 +4306,14 @@ export default {
       }
     },
     "v0_7_28_9": {
-      "intro": "Đây là bản dùng thử sớm của 0.7.29L; gói cài đặt mang số phiên bản 0.7.28.9. Để chúc mừng BLG vô địch Chung kết Thế giới Liên Minh Huyền Thoại 2026, thư viện có thêm tab Phúc lợi với năm ca khúc chủ đề được phát trọn bài mà không cần đăng nhập. Một phần thay đổi của 0.7.29 cũng đã có sẵn ở đây.",
+      "intro": "Đây là bản dùng thử sớm của 0.7.29L; gói cài đặt mang số phiên bản 0.7.28.9. Để chúc mừng BLG vô địch Chung kết Thế giới Liên Minh Huyền Thoại 2026, thư viện có thêm tab Phúc lợi, nơi các ca khúc liên quan đến Liên Minh Huyền Thoại được phát trọn bài mà không cần đăng nhập. Một phần thay đổi của 0.7.29 cũng đã có sẵn ở đây.",
       "banner": {
         "alt": "Chúc mừng BLG vô địch Chung kết Thế giới Liên Minh Huyền Thoại 2026",
         "hint": "Mở tab Phúc lợi"
       },
       "blgWelfare": {
         "title": "Ca khúc phúc lợi mừng BLG vô địch",
-        "description": "Tab Phúc lợi mới trong thư viện, có ở cả dạng lưới và tường Bravais: RISE, Legends Never Die (kể cả bản remix của Alan Walker), Flash Funk và bản remix Camelot được phát trọn bài — không cần đăng nhập, không bị cắt đoạn nghe thử. Bấm vào bìa để phát; hàng đợi là toàn bộ tab."
+        "description": "Tab Phúc lợi mới trong thư viện, có ở cả dạng lưới và tường Bravais: các ca khúc liên quan đến Liên Minh Huyền Thoại được phát trọn bài — không cần đăng nhập, không bị cắt đoạn nghe thử. Bấm vào bìa để phát; hàng đợi là toàn bộ nhóm."
       },
       "preview0729": {
         "title": "Dùng thử 0.7.29",

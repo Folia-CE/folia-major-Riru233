@@ -1,15 +1,13 @@
 // src/services/bundledSongAudio.ts
 // 仓库自带音频：这几首歌直接放打包进应用的文件，不向平台要播放地址。不经过平台也就没有
 // 登录、会员和试听片段这些限制（试听是平台按账号给的一段地址，见 neteaseProvider 的 freeTrialInfo）。
-// 键是 `<平台 id>:<歌曲 id>`，值是 Vite 打进构建产物的资源地址：网页版与桌面版都能读到。
+// 表由 assets/songs/welfare-songs.json 生成：里面每条带 `audio` 的歌，就去 assets/music 找那个文件名，
+// 键仍是 `<平台 id>:<歌曲 id>`。加歌只改 JSON + 落一个 mp3，这里不用动。
 // 带 `welfareReasonKey` 的是福利歌曲：播放时会把这首为什么免登录放整首说一句（welfareNotice.ts）。
 
-import legendsNeverDieRemixUrl from '../../assets/music/legends-never-die-alan-walker-remix.mp3?url';
-import legendsNeverDieUrl from '../../assets/music/legends-never-die.mp3?url';
-import flashFunkUrl from '../../assets/music/flash-funk.mp3?url';
-import riseUrl from '../../assets/music/rise.mp3?url';
-import camelotRiseAndFallUrl from '../../assets/music/camelot-rise-and-fall-djyaha-remix.mp3?url';
+import songData from '../../assets/songs/welfare-songs.json';
 import { createSafeObjectUrl } from '../utils/blobGuards';
+import { WELFARE_REASON_KEY } from './welfareSongs';
 
 type BundledSongAudio = {
     url: string;
@@ -17,38 +15,38 @@ type BundledSongAudio = {
     welfareReasonKey?: string;
 };
 
-const BUNDLED_SONG_AUDIO: Readonly<Record<string, BundledSongAudio>> = {
-    // Legends Never Die (Alan Walker Remix) - Against the Current, Alan Walker, Mako
-    // https://music.163.com/#/song?id=527822968
-    'netease:527822968': {
-        url: legendsNeverDieRemixUrl,
-        welfareReasonKey: 'status.songWelfareBlgWorlds2026',
-    },
-    // Legends Never Die - 英雄联盟, Against the Current
-    // https://music.163.com/#/song?id=506196018
-    'netease:506196018': {
-        url: legendsNeverDieUrl,
-        welfareReasonKey: 'status.songWelfareBlgWorlds2026',
-    },
-    // Flash Funk - 英雄联盟, Marshmello
-    // https://music.163.com/#/song?id=400161903
-    'netease:400161903': {
-        url: flashFunkUrl,
-        welfareReasonKey: 'status.songWelfareBlgWorlds2026',
-    },
-    // RISE - 英雄联盟, Mako, The Word Alive, The Glitch Mob
-    // https://music.163.com/#/song?id=1313107065
-    'netease:1313107065': {
-        url: riseUrl,
-        welfareReasonKey: 'status.songWelfareBlgWorlds2026',
-    },
-    // Camelot - Rise and Fall[DjYaha Remix2017] - DjYaha
-    // https://music.163.com/#/song?id=478419032
-    'netease:478419032': {
-        url: camelotRiseAndFallUrl,
-        welfareReasonKey: 'status.songWelfareBlgWorlds2026',
-    },
+/** `assets/music/*.mp3` 的打包地址，按文件名索引。目录不在仓库里，缺文件时就查不到（退回平台）。 */
+const AUDIO_URLS: Record<string, string> = Object.fromEntries(
+    Object.entries(
+        import.meta.glob('../../assets/music/*.mp3', { eager: true, query: '?url', import: 'default' }) as Record<
+            string,
+            string
+        >,
+    ).map(([filePath, url]) => [filePath.slice(filePath.lastIndexOf('/') + 1), url]),
+);
+
+type BundledSongRecord = {
+    provider: string;
+    id: number;
+    audio?: string;
+    reasonKey?: string;
 };
+
+const buildBundledTable = (): Record<string, BundledSongAudio> => {
+    const table: Record<string, BundledSongAudio> = {};
+    for (const record of (songData as { songs: readonly BundledSongRecord[] }).songs) {
+        if (!record.audio) continue;
+        const url = AUDIO_URLS[record.audio];
+        if (!url) continue;
+        table[`${record.provider}:${record.id}`] = {
+            url,
+            welfareReasonKey: record.reasonKey ?? WELFARE_REASON_KEY,
+        };
+    }
+    return table;
+};
+
+const BUNDLED_SONG_AUDIO: Readonly<Record<string, BundledSongAudio>> = buildBundledTable();
 
 const bundledEntry = (providerId: string | null | undefined, songId: string | number): BundledSongAudio | null => {
     if (!providerId) return null;

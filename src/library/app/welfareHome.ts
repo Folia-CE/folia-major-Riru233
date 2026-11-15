@@ -1,39 +1,84 @@
 // src/library/app/welfareHome.ts
-// 首页「福利」页签的卡片：福利歌曲（services/welfareSongs 的元数据）投影成首页卡片，网格与 bravais 同用一份。
-// 卡片是「一首歌」而不是集合：type 记作 song，raw 带着整条 SongResult，点它就是播放——两套首页都按
-// 「点了直接放」处理，不进任何新的一层。id 带 `welfare:` 前缀，免得与在线歌单的 id 撞在同一个目录会话里。
+// 首页「福利」页签的卡片与集合：墙上只有两个分组的入口（版本典藏 / 限时福利），点进去是那一组的集合页
+// （GridView / BravaisCollection 都从集合描述渲染，曲目直接带在描述里，见 core/collection/collection.contract 的
+// WelfareGridViewCollectionDescriptor）。网格与 bravais 同用这一份。
+// 入口卡的 id 带 `welfare-group:` 前缀，免得与在线歌单的 id 撞在同一个目录会话 / 导航栈里。
 // 放在 app（装配层）而不是 core：core 的纯变换不读 services，而这层读的是自带音频的歌曲元数据。
 
-import type { SongResult } from '../../types';
-import { WELFARE_SONGS, findWelfareSong } from '../../services/welfareSongs';
+import i18n from '../../i18n/config';
+import {
+    isWelfareLimitedOpen,
+    welfareSongsOfGroup,
+    type WelfareGroupId,
+} from '../../services/welfareSongs';
 import type { LibraryHomeCard } from '../core/home/homeModel.contract';
+import type { WelfareGridViewCollectionDescriptor } from '../core/collection/collection.contract';
 
-const WELFARE_CARD_PREFIX = 'welfare:';
+const WELFARE_GROUP_PREFIX = 'welfare-group:';
 
-/** 卡片 id（与歌曲 id 一一对应）。 */
-export const welfareCardId = (songId: string | number): string => `${WELFARE_CARD_PREFIX}${String(songId)}`;
+const GROUP_IDS: readonly WelfareGroupId[] = ['permanent', 'limited'];
 
-/** 卡片 id 还原成歌曲 id；不是福利卡片就返回 null。 */
-export const welfareSongIdOfCard = (cardId: string | number): string | null => {
+/** 分组入口卡的 id，同时也是这一组集合的 id。 */
+export const welfareGroupCardId = (group: WelfareGroupId): string => `${WELFARE_GROUP_PREFIX}${group}`;
+
+/** 入口卡 / 集合 id 还原成分组；不是福利分组就返回 null。 */
+export const welfareGroupOfCard = (cardId: string | number): WelfareGroupId | null => {
     const text = String(cardId);
-    return text.startsWith(WELFARE_CARD_PREFIX) ? text.slice(WELFARE_CARD_PREFIX.length) : null;
+    if (!text.startsWith(WELFARE_GROUP_PREFIX)) return null;
+    const group = text.slice(WELFARE_GROUP_PREFIX.length) as WelfareGroupId;
+    return GROUP_IDS.includes(group) ? group : null;
 };
 
-/** 专区里的歌按顺序做成卡片（歌名、歌手、专辑、封面）。 */
-export const welfareHomeCards = (): LibraryHomeCard[] => WELFARE_SONGS.map(({ song }) => ({
-    id: welfareCardId(song.id),
-    name: song.name,
-    type: 'song',
-    coverUrl: song.album.coverUrl,
-    description: song.artists.map(entry => entry.name).join(' / '),
-    summary: song.album.name,
-    isVirtual: true,
-    raw: song,
-}));
+/** 一组的文案：名字与一行说明（永久组一直在，限时组写明什么时候结束）。 */
+const groupTexts = (group: WelfareGroupId) => {
+    const limited = group === 'limited';
+    return {
+        name: i18n.t(limited ? 'home.welfareLimited' : 'home.welfarePermanent'),
+        description: i18n.t(limited ? 'home.welfareLimitedHint' : 'home.welfarePermanentHint'),
+    };
+};
 
-/** 卡片（或滑块项）对应的歌；认不出来时返回 null。 */
-export const welfareSongOfCard = (cardId: string | number): SongResult | null => {
-    const songId = welfareSongIdOfCard(cardId);
-    if (songId === null) return null;
-    return findWelfareSong(songId)?.song ?? null;
+/** 一组的入口卡：封面取这一组第一首的专辑图，还没有歌的组留空（墙面画占位）。 */
+const groupEntry = (group: WelfareGroupId): LibraryHomeCard => {
+    const entries = welfareSongsOfGroup(group);
+    return {
+        id: welfareGroupCardId(group),
+        ...groupTexts(group),
+        type: 'playlist',
+        coverUrl: entries[0]?.song.album.coverUrl,
+        trackCount: entries.length,
+        isVirtual: true,
+    };
+};
+
+/**
+ * 福利页的入口卡：版本典藏那一组一直在；限时福利要窗口内、且真的放了歌才画（窗口过了或还没有歌时整组收起——
+ * 不然点进去是一个空集合页）。
+ */
+export const welfareGroupCards = (): LibraryHomeCard[] => [
+    groupEntry('permanent'),
+    ...(isWelfareLimitedOpen() && welfareSongsOfGroup('limited').length > 0 ? [groupEntry('limited')] : []),
+];
+
+/**
+ * 一组福利的集合描述：曲目就是这一组此刻的歌（queue 顺序即列表顺序），点开的集合页由 GridView / BravaisCollection
+ * 渲染，播放走自带音频（services/bundledSongAudio），不经过平台的试听限制。
+ */
+export const welfareGroupCollection = (group: WelfareGroupId): WelfareGridViewCollectionDescriptor => {
+    const entries = welfareSongsOfGroup(group);
+    return {
+        source: 'welfare',
+        id: welfareGroupCardId(group),
+        type: 'playlist',
+        ...groupTexts(group),
+        coverUrl: entries[0]?.song.album.coverUrl,
+        trackCount: entries.length,
+        tracks: entries.map(entry => entry.song),
+    };
+};
+
+/** 卡片对应的集合描述；不是福利入口卡（或这一天这一组已经收起）就返回 null。 */
+export const welfareCollectionOfCard = (cardId: string | number): WelfareGridViewCollectionDescriptor | null => {
+    const group = welfareGroupOfCard(cardId);
+    return group ? welfareGroupCollection(group) : null;
 };

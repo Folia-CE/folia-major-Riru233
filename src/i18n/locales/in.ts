@@ -2028,6 +2028,12 @@ export default {
     "radioTab": "Radio",
     "explore": "Jelajahi",
     "welfare": "Bonus",
+    "welfareChampion": "Kami juara!",
+    "welfareChampionSubtitle": "Selamat kepada BLG yang menjadi juara League of Legends World Championship 2026!",
+    "welfarePermanent": "Arsip versi",
+    "welfareLimited": "Bonus terbatas",
+    "welfarePermanentHint": "Lagu klasik, hanya di versi 0.7.29",
+    "welfareLimitedHint": "Gratis utuh sampai 2026-12-15",
     "exploreRefresh": "Muat ulang",
     "exploreMore": "Lainnya",
     "exploreEmpty": "Belum ada rekomendasi",
@@ -4333,14 +4339,14 @@ export default {
       }
     },
     "v0_7_28_9": {
-      "intro": "Ini adalah cuplikan awal 0.7.29L; paket pemasangnya memakai nomor versi 0.7.28.9. Untuk merayakan BLG menjuarai Kejuaraan Dunia League of Legends 2026, pustaka mendapat tab Kesejahteraan berisi lima lagu tema turnamen yang bisa diputar penuh tanpa masuk akun. Sebagian perubahan 0.7.29 juga sudah ada di sini.",
+      "intro": "Ini adalah cuplikan awal 0.7.29L; paket pemasangnya memakai nomor versi 0.7.28.9. Untuk merayakan BLG menjuarai Kejuaraan Dunia League of Legends 2026, pustaka mendapat tab Kesejahteraan tempat lagu-lagu terkait League of Legends diputar penuh tanpa masuk akun. Sebagian perubahan 0.7.29 juga sudah ada di sini.",
       "banner": {
         "alt": "Selamat kepada BLG atas kemenangan di Kejuaraan Dunia League of Legends 2026",
         "hint": "Buka tab Kesejahteraan"
       },
       "blgWelfare": {
         "title": "Lagu kesejahteraan juara BLG",
-        "description": "Tab Kesejahteraan baru di pustaka, tersedia di grid maupun dinding Bravais: RISE, Legends Never Die (termasuk remix Alan Walker), Flash Funk, dan remix Camelot diputar penuh — tanpa masuk akun dan tanpa potongan pratinjau platform. Klik sampulnya untuk memutar; antreannya seluruh isi tab."
+        "description": "Tab Kesejahteraan baru di pustaka, tersedia di grid maupun dinding Bravais: lagu-lagu terkait League of Legends diputar penuh — tanpa masuk akun dan tanpa potongan pratinjau platform. Klik sampulnya untuk memutar; antreannya seluruh isi grup."
       },
       "preview0729": {
         "title": "Cicipi 0.7.29",
