@@ -7,6 +7,7 @@
 
 import i18n from '../../i18n/config';
 import {
+    isWelfareCatalogAvailable,
     isWelfareLimitedOpen,
     welfareSongsOfGroup,
     type WelfareGroupId,
@@ -53,18 +54,22 @@ const groupEntry = (group: WelfareGroupId): LibraryHomeCard => {
 
 /**
  * 福利页的入口卡：版本典藏那一组一直在；限时福利要窗口内、且真的放了歌才画（窗口过了或还没有歌时整组收起——
- * 不然点进去是一个空集合页）。
+ * 不然点进去是一个空集合页）。这份目录本身读不到（闭源素材没进这一份构建）时一张都不画。
  */
-export const welfareGroupCards = (): LibraryHomeCard[] => [
-    groupEntry('permanent'),
-    ...(isWelfareLimitedOpen() && welfareSongsOfGroup('limited').length > 0 ? [groupEntry('limited')] : []),
-];
+export const welfareGroupCards = (): LibraryHomeCard[] => {
+    if (!isWelfareCatalogAvailable()) return [];
+    return [
+        groupEntry('permanent'),
+        ...(isWelfareLimitedOpen() && welfareSongsOfGroup('limited').length > 0 ? [groupEntry('limited')] : []),
+    ];
+};
 
 /**
  * 一组福利的集合描述：曲目就是这一组此刻的歌（queue 顺序即列表顺序），点开的集合页由 GridView / BravaisCollection
- * 渲染，播放走自带音频（services/bundledSongAudio），不经过平台的试听限制。
+ * 渲染，播放走自带音频（services/bundledSongAudio），不经过平台的试听限制。目录不在时返回 null（没有这页可开）。
  */
-export const welfareGroupCollection = (group: WelfareGroupId): WelfareGridViewCollectionDescriptor => {
+export const welfareGroupCollection = (group: WelfareGroupId): WelfareGridViewCollectionDescriptor | null => {
+    if (!isWelfareCatalogAvailable()) return null;
     const entries = welfareSongsOfGroup(group);
     return {
         source: 'welfare',

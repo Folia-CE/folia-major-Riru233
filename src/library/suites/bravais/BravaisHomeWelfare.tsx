@@ -26,8 +26,10 @@ const BravaisHomeWelfare: React.FC<{
     const items = useMemo<LibraryHomeCard[]>(() => welfareGroupCards(), []);
     const onOpen = useCallback((card: LibraryHomeCard) => {
         const group = welfareGroupOfCard(card.id);
-        // 入口卡 → 那一组的集合页（已过窗口的组没有集合，点了什么也不发生）。
-        if (group) onOpenCollection(welfareGroupCollection(group));
+        if (!group) return;
+        // 入口卡 → 那一组的集合页（已过窗口的组、或福利目录读不到时没有集合，点了什么也不发生）。
+        const collection = welfareGroupCollection(group);
+        if (collection) onOpenCollection(collection);
     }, [onOpenCollection]);
     return (
         <BravaisHomeDirectory

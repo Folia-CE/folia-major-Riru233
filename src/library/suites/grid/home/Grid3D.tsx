@@ -17,6 +17,7 @@ import SwitcherPill from '../../../../components/login/SwitcherPill';
 import ExploreSurface from '../../../../components/app/home/explore/ExploreSurface';
 import { createOnlineGridViewCollection } from '../../../../components/app/home/gridViewCollectionAdapters';
 import { welfareCollectionOfCard, welfareGroupCards } from '../../../app/welfareHome';
+import { isWelfareCatalogAvailable } from '../../../../services/welfareSongs';
 import { hasExploreWallEntries } from '../../../../components/app/lattice/exploreWall';
 import type { ProviderCollection, ProviderUser } from '../../../../types/onlineMusic';
 import { useThemeSettingsStore } from '../../../../stores/useThemeSettingsStore';
@@ -199,7 +200,8 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
         playlists,
         cloudPlaylist,
         navidromeEnabled,
-        includeWelfare: true,
+        // 福利页签只在福利目录读得到时出现（assets/music 是闭源素材，这份构建里可能整个不在，见 services/welfareSongs）。
+        includeWelfare: isWelfareCatalogAvailable(),
     });
     const { tab: homeViewTab, setTab: setHomeViewTab, isOnlineTab, online, tabs: homeTabs } = homeSources;
     const activeProviderId = online.providerId;

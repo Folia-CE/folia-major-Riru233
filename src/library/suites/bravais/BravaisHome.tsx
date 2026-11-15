@@ -12,6 +12,7 @@ import { useBravaisHomeChrome } from './useBravaisHomeChrome';
 import { BravaisHomeLocal, BravaisHomeNavidrome, BravaisHomeOnline } from './BravaisHomeSources';
 import BravaisHomeExplore from './BravaisHomeExplore';
 import BravaisHomeWelfare from './BravaisHomeWelfare';
+import { isWelfareCatalogAvailable } from '../../../services/welfareSongs';
 
 // src/library/suites/bravais/BravaisHome.tsx
 // 首页 surface（B9，设计稿 §10.5）：七个页签（歌单 / 电台 / 专辑 / 探索 / 本地 / Navidrome / 福利）都铺墙；探索按网格探索拼贴的
@@ -36,7 +37,15 @@ const BravaisHome: React.FC<LibraryHomeSurfaceProps> = (props) => {
         isInteractive,
         declaredActions,
     } = props;
-    const sources = useLibraryHomeSources({ account, user, playlists, cloudPlaylist, navidromeEnabled, includeWelfare: true });
+    // 福利页签只在福利目录读得到时出现（assets/music 是闭源素材，这份构建里可能整个不在）。
+    const sources = useLibraryHomeSources({
+        account,
+        user,
+        playlists,
+        cloudPlaylist,
+        navidromeEnabled,
+        includeWelfare: isWelfareCatalogAvailable(),
+    });
     const { tab, setTab, tabs, online } = sources;
     const onlineList = useLibraryHomeOnline(homeResources, sources);
     const { scanPercent, snapshot: actionState } = useLibraryHomeActions(homeResources.actions);
