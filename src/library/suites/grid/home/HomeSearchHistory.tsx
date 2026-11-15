@@ -1,11 +1,17 @@
-import React from 'react';
+import React, { useLayoutEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
+import { useGlass } from '@/shinoinject/useGlass';
+
 
 // src/library/suites/grid/home/HomeSearchHistory.tsx
 // 首页搜索框点开时贴在它下面的搜索历史：一条一个标签，标签本身点了就再搜一次，
 // 右边的叉删这一条，右上角「清空」删整份。数据在 core/home/useHomeSearchHistoryStore。
 // 面板上的按下都挡住默认行为：那样输入框不会先失焦，面板也就不会在点击落下之前消失。
+// 面板必须挂在 body 上（HomeSearchHistoryPopover）：搜索框自己是块玻璃、身上带 backdrop-filter，
+// 挂在它里面会让面板的 backdrop-filter 取样根被截在表单内部，取样结果是一片透明——玻璃直接失效。
 
 type HomeSearchHistoryProps = {
     items: readonly string[];
@@ -13,6 +19,7 @@ type HomeSearchHistoryProps = {
     onRemove: (query: string) => void;
     onClear: () => void;
     isDaylight: boolean;
+    /** 宽度由调用方定：桌面页头那颗搜索框旁边是固定宽，紧凑档是占满整条搜索层。 */
     className?: string;
 };
 
@@ -30,17 +37,25 @@ export const HomeSearchHistory: React.FC<HomeSearchHistoryProps> = ({
     const { t } = useTranslation();
 
     const surface = isDaylight
-        ? 'bg-white/90 border-black/10 text-zinc-800 shadow-[0_18px_40px_rgba(15,23,42,0.18)]'
-        : 'bg-black/70 border-white/10 text-zinc-100 shadow-[0_18px_40px_rgba(0,0,0,0.45)]';
+        ? 'text-zinc-800'
+        : 'text-zinc-100';
     const chip = isDaylight
         ? 'border-black/10 bg-black/[0.04] hover:bg-black/[0.08]'
         : 'border-white/10 bg-white/[0.06] hover:bg-white/[0.12]';
-
+    useGlass();
     return (
         <div
+            data-glass data-glass-jelly data-glass-light
             id="home-search-history"
             data-testid="home-search-history"
-            className={`w-72 max-w-[calc(100vw-2rem)] rounded-2xl border p-3 backdrop-blur-xl ${surface} ${className}`}
+            className={`max-w-[calc(100vw-2rem)] rounded-2xl border-none p-3 ${surface} ${className}`}
+            style={{
+                backgroundColor: isDaylight ? 'rgba(215,215,215,0.42)' : 'rgba(40, 40, 40, 0.42)',
+                borderTop: isDaylight ? '1px solid rgba(255,255,255,0.32)' : '1px solid rgba(255,255,255,0.22)',
+                borderBottom: isDaylight ? '1px solid rgba(255,255,255,0.32)' : '1px solid rgba(255,255,255,0.22)',
+                outline: '1px solid rgba(40,40,40,0.2)',
+                boxShadow: '2px 2px 8px 2px rgba(40,40,40,0.4)',
+            }}
         >
             <div className="mb-2 flex items-center justify-between gap-2">
                 <span className="text-[11px] font-medium uppercase tracking-wide opacity-50">
@@ -84,6 +99,83 @@ export const HomeSearchHistory: React.FC<HomeSearchHistoryProps> = ({
                 ))}
             </div>
         </div>
+    );
+};
+
+/** 面板贴在搜索框下沿的哪一种对齐：桌面档右对齐那 288px，紧凑档跟搜索框同宽。 */
+type HomeSearchHistoryPopoverProps = {
+    open: boolean;
+    /** 量位置的锚点：桌面档是搜索表单，紧凑档是占满页头的那个搜索表单。 */
+    anchorRef: React.RefObject<HTMLElement | null>;
+    align?: 'end' | 'stretch';
+    children: React.ReactNode;
+};
+
+type PopoverBox = { top: number; left: number; width: number };
+
+const DESKTOP_PANEL_WIDTH = 288;
+const PANEL_GAP = 8;
+
+// 挂在 body 上、按锚点矩形定位的浮层。搜索框本身是玻璃（backdrop-filter），面板做它的后代时
+// backdrop-filter 的取样根会被截在搜索框内部，取样到的是「搜索框自己的底色」而不是页面，
+// 于是玻璃看起来完全失效。挪到 body 上、用 fixed 定位视觉上仍贴在搜索框下沿，取样根回到页面。
+// 动画只做 y：祖先的 opacity 动画同样会截断取样根，位移不会。
+export const HomeSearchHistoryPopover: React.FC<HomeSearchHistoryPopoverProps> = ({
+    open,
+    anchorRef,
+    align = 'end',
+    children,
+}) => {
+    const [box, setBox] = useState<PopoverBox | null>(null);
+
+    useLayoutEffect(() => {
+        if (!open) return;
+        const measure = () => {
+            const anchor = anchorRef.current;
+            if (!anchor) return;
+            const rect = anchor.getBoundingClientRect();
+            const width = align === 'stretch'
+                ? rect.width
+                : Math.min(DESKTOP_PANEL_WIDTH, window.innerWidth - 32);
+            // 右侧对齐时用 left 换算好再夹回窗口内：面板比锚点宽时可以往左探出去。
+            const left = align === 'stretch'
+                ? rect.left
+                : Math.max(16, Math.min(rect.right - width, window.innerWidth - width - 16));
+            setBox({ top: rect.bottom + PANEL_GAP, left, width });
+        };
+        measure();
+        window.addEventListener('resize', measure);
+        // 捕获阶段听滚动：页头虽然不动，内容区滚动也会让锚点位置变。
+        window.addEventListener('scroll', measure, true);
+        return () => {
+            window.removeEventListener('resize', measure);
+            window.removeEventListener('scroll', measure, true);
+        };
+    }, [open, align, anchorRef]);
+
+    if (typeof document === 'undefined') return null;
+
+    return createPortal(
+        <AnimatePresence>
+            {open && box && (
+                <motion.div
+                    initial={{ y: -6 }}
+                    animate={{ y: 0 }}
+                    exit={{ y: -6 }}
+                    transition={{ duration: 0.16 }}
+                    style={{
+                        position: 'fixed',
+                        top: box.top,
+                        left: box.left,
+                        width: box.width,
+                        zIndex: 60,
+                    }}
+                >
+                    {children}
+                </motion.div>
+            )}
+        </AnimatePresence>,
+        document.body,
     );
 };
 

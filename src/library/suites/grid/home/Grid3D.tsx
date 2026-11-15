@@ -35,7 +35,7 @@ import { useGridMapVisibilityStore } from './gridMapVisibilityStore';
 import { useIsBottomLayoutCompact } from '../../../../stores/useBottomDockStore';
 import { cycleIndex, isOnlineHomeTab } from '../../../core/home/homeSources';
 import { useHomeSearchHistoryStore } from '../../../core/home/useHomeSearchHistoryStore';
-import HomeSearchHistory from './HomeSearchHistory';
+import HomeSearchHistory, { HomeSearchHistoryPopover } from './HomeSearchHistory';
 import { useUpdateIndicator } from '../../../../hooks/useUpdateIndicator';
 import { useReducedMotionFor } from '../../../../hooks/useReducedMotionFor';
 import { useGlass } from '@/shinoinject/useGlass';
@@ -242,6 +242,9 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
     const [focusedIndex, setFocusedIndex] = useState(0);
     const gridRootRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
+    // 历史浮层要按锚点定位（它挂在 body 上，见 HomeSearchHistoryPopover）：桌面档与紧凑档各有一颗表单。
+    const searchFormRef = useRef<HTMLFormElement>(null);
+    const compactSearchFormRef = useRef<HTMLFormElement>(null);
     const [scanDetailsExpanded, setScanDetailsExpanded] = useState(false);
     // 点开搜索框时贴在它下面的历史：数据在 core/home/useHomeSearchHistoryStore（localStorage）。
     const [isSearchHistoryOpen, setIsSearchHistoryOpen] = useState(false);
@@ -637,7 +640,7 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                     className="transition-transform duration-300 ease-out"
                     style={{ transform: isCompact && isCompactSearchOpen ? 'translateX(-100%)' : 'translateX(0)' }}
                 >
-                    <div className="relative grid grid-cols-2 grid-cols-2 items-center w-full py-4 py-10 px-4 gap-y-4 gap-y-0">
+                    <div className="relative grid grid-cols-2 items-center w-full py-10 px-4 gap-y-0">
                     {/* Left title and settings */}
                     <div className="flex items-center justify-start order-1 md:order-none gap-[10px]">
                         {/* 左侧按钮组 */}
@@ -982,67 +985,6 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                         </div>
                     </div>
 
-                    {/* Right Search Bar */}
-                    <div className="flex justify-end order-2 md:order-none">
-                        <form
-                            onSubmit={handleSearch}
-                            className="relative w-full md:w-56 transition-all focus-within:md:w-72"
-                            onBlur={event => {
-                                // 焦点离开整块（连面板一起）才收起，点到面板里的标签不算离开。
-                                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-                                    setIsSearchHistoryOpen(false);
-                                }
-                            }}
-                        >
-                            {isSearchingActive ? (
-                                <Loader2 className="absolute left-3 top-1/2 w-4 h-4 animate-spin opacity-40 -mt-2" />
-                            ) : (
-                                <Search
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40 w-4 h-4 cursor-pointer hover:opacity-100 transition-opacity"
-                                    onClick={() => handleSearch()}
-                                />
-                            )}
-                            <input
-                                ref={searchInputRef}
-                                type="text"
-                                placeholder={homeViewTab === 'local' ? t('home.searchLocal') : homeViewTab === 'navidrome' ? t('home.searchNavidrome') : t('home.searchDatabase')}
-                                value={searchQuery}
-                                onChange={e => setSearchQuery(e.target.value)}
-                                onFocus={() => setIsSearchHistoryOpen(true)}
-                                onKeyDown={event => {
-                                    if (event.key === 'Escape' && isSearchHistoryOpen) {
-                                        event.stopPropagation();
-                                        setIsSearchHistoryOpen(false);
-                                    }
-                                }}
-                                aria-expanded={isSearchHistoryOpen && searchHistory.length > 0}
-                                aria-controls="home-search-history"
-                                className={`w-full ${inputBg} border border-white/10 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all placeholder:text-current placeholder:opacity-40 select-text`}
-                                style={{ color: 'var(--text-primary)' }}
-                            />
-                            <AnimatePresence>
-                                {isSearchHistoryOpen && searchHistory.length > 0 && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -6 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -6 }}
-                                        transition={{ duration: 0.16 }}
-                                        className="absolute right-0 top-full z-40 mt-2"
-                                    >
-                                        <HomeSearchHistory
-                                            items={searchHistory}
-                                            onPick={item => {
-                                                setSearchQuery(item);
-                                                void runSearch(item);
-                                            }}
-                                            onRemove={forgetSearch}
-                                            onClear={clearSearchHistory}
-                                            isDaylight={isDaylight}
-                                        />
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </form>
                     {/* Center Tab Switcher */}
                     {/* <div
                         // data-glass-jelly
@@ -1083,12 +1025,19 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                             </button>
                         ) : (
                             <form
-                            onSubmit={handleSearch}
-                            className="relative w-full rounded-full transition-all md:w-56 focus-within:md:w-72"
-                            data-glass
-                            data-glass-jelly
-                            data-glass-light
-                            style={{ ...headerGlassStyle, ...headerFadeStyle }}
+                                ref={searchFormRef}
+                                onSubmit={handleSearch}
+                                className="relative w-full rounded-full transition-all md:w-56 focus-within:md:w-72"
+                                data-glass
+                                data-glass-jelly
+                                data-glass-light
+                                style={{ ...headerGlassStyle, ...headerFadeStyle }}
+                                onBlur={event => {
+                                    // 焦点离开整块（连历史面板一起）才收起，点到面板里的标签不算离开。
+                                    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                                        setIsSearchHistoryOpen(false);
+                                    }
+                                }}
                             >
                                 {isSearchingActive ? (
                                     <Loader2 className="absolute left-3 top-1/2 w-4 h-4 animate-spin opacity-40 -mt-2" />
@@ -1104,9 +1053,36 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                     placeholder={homeViewTab === 'local' ? t('home.searchLocal') : homeViewTab === 'navidrome' ? t('home.searchNavidrome') : t('home.searchDatabase')}
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
+                                    onFocus={() => setIsSearchHistoryOpen(true)}
+                                    onKeyDown={event => {
+                                        if (event.key === 'Escape' && isSearchHistoryOpen) {
+                                            event.stopPropagation();
+                                            setIsSearchHistoryOpen(false);
+                                        }
+                                    }}
+                                    aria-expanded={isSearchHistoryOpen && searchHistory.length > 0}
+                                    aria-controls="home-search-history"
                                     className="w-full border border-white/10 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all placeholder:text-current placeholder:opacity-40 select-text placeholder:italic"
                                     style={{ color: 'var(--text-primary)' }}
                                 />
+                                {/* 历史面板挂在 body 上（HomeSearchHistoryPopover）：搜索框自己带
+                                    backdrop-filter，面板做它的后代时玻璃取样根被截断，滤镜会整个失效。 */}
+                                <HomeSearchHistoryPopover
+                                    open={isSearchHistoryOpen && searchHistory.length > 0}
+                                    anchorRef={searchFormRef}
+                                    align="end"
+                                >
+                                    <HomeSearchHistory
+                                        items={searchHistory}
+                                        onPick={item => {
+                                            setSearchQuery(item);
+                                            void runSearch(item);
+                                        }}
+                                        onRemove={forgetSearch}
+                                        onClear={clearSearchHistory}
+                                        isDaylight={isDaylight}
+                                    />
+                                </HomeSearchHistoryPopover>
                             </form>
                         )}
                     </div>
@@ -1126,6 +1102,7 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                         inert={!isCompactSearchOpen}
                     >
                         <form
+                            ref={compactSearchFormRef}
                             onSubmit={handleSearch}
                             className="relative h-10 w-full rounded-full"
                             data-glass
@@ -1148,11 +1125,16 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
                                 onKeyDown={e => {
-                                    // Esc 收起，输入框里的字留着（下次展开接着改）。
+                                    // Esc 先收搜索历史；历史没开时才收起整条搜索层。输入框里的字留着（下次展开接着改）。
                                     if (e.key !== 'Escape') return;
                                     e.preventDefault();
+                                    if (isSearchHistoryOpen) {
+                                        setIsSearchHistoryOpen(false);
+                                        return;
+                                    }
                                     collapseCompactSearch();
                                 }}
+                                onFocus={() => setIsSearchHistoryOpen(true)}
                                 onBlur={e => {
                                     // 没打字就离开这一块，自动收回圆钮；指针挪到同一块里的那几颗图标上不算离开。
                                     if (searchQuery.trim()) return;
@@ -1173,6 +1155,22 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                             >
                                 <X className="h-3.5 w-3.5 opacity-50" />
                             </button>
+                            <HomeSearchHistoryPopover
+                                open={isSearchHistoryOpen && searchHistory.length > 0}
+                                anchorRef={compactSearchFormRef}
+                                align="stretch"
+                            >
+                                <HomeSearchHistory
+                                    items={searchHistory}
+                                    onPick={item => {
+                                        setSearchQuery(item);
+                                        void runSearch(item);
+                                    }}
+                                    onRemove={forgetSearch}
+                                    onClear={clearSearchHistory}
+                                    isDaylight={isDaylight}
+                                />
+                            </HomeSearchHistoryPopover>
                         </form>
                     </div>
                 )}
