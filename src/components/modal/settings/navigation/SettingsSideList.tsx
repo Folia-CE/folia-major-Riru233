@@ -51,8 +51,10 @@ export const SettingsSideList: React.FC<SettingsSideListProps> = ({
         );
     };
 
+    // 宽屏时这一栏就长在弹窗面板上，自己再刷一层底会和面板的颜色叠出两种灰；紧凑档它在抽屉里，
+    // 抽屉本身没有底色，所以只有那一形态需要自己铺底（showSearch === false 只发生在抽屉里）。
     return (
-        <aside className={`flex h-full min-h-0 w-full shrink-0 flex-col bg-transparent px-2.5 pb-2.5 pt-3.5 ${showSearch ? 'border-r border-[var(--st-line)]' : ''}`}>
+        <aside className={`flex h-full min-h-0 w-full shrink-0 flex-col px-2.5 pb-2.5 pt-3.5 ${showSearch ? 'border-r border-[var(--st-line)]' : 'bg-[var(--bg-color)]'}`}>
             {showSearch && (
                 <SettingsSearchField
                     query={query}

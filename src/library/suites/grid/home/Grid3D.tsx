@@ -1162,7 +1162,7 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                         setSearchQuery(item);
                                         void runSearch(item);
                                     }}
-                                    onRemove={forgetSearch}
+                                    onRemove={forgetSearchHistoryQuery}
                                     onClear={clearSearchHistory}
                                     isDaylight={isDaylight}
                                 />
