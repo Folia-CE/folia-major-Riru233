@@ -24,8 +24,8 @@ import { SCRATCHPAD_TABS, scratchpadLookVars } from './scratchpadLook';
 import { getSongArtistLabel } from '../../../services/onlineMusic/songMetadata';
 import { SCRATCHPAD_TILT_DEG } from './scratchpadTilt';
 import { useSlimOrder } from './scratchpadPaper';
-import './scratchpad.css';
 import { useGlass } from '@/shinoinject/useGlass';
+import './scratchpad.css';
 
 // src/components/app/scratchpad/ScratchpadHost.tsx
 // 速记簿的界面：左缘的把手和从左边滑出的抽屉（设计稿 plan/scratchpad-spec.md）。抽屉非模态——不加遮罩、不抢焦点，
@@ -442,11 +442,8 @@ const ScratchpadHost: React.FC<ScratchpadHostProps> = ({ isDaylight, playback, q
     }, [isExpanded]);
     const openPage = useCallback((next: ScratchpadTab) => {
         setTab(next);
-        requestAnimationFrame(() => document.getElementById(`scratchpad-tab-${next}`)?.focus());
         setShowOverview(false);
     }, [setTab]);
-    
-    useGlass();
     const notesSide = useMemo<CanvasSide>(() => ({
         jumpLabel: t('scratchpad.jumpTo'),
         tipsLabel: t('scratchpad.tipsTitle'),
@@ -458,7 +455,7 @@ const ScratchpadHost: React.FC<ScratchpadHostProps> = ({ isDaylight, playback, q
     const lookVars = useMemo(() => scratchpadLookVars(isDaylight) as React.CSSProperties, [isDaylight]);
     // 底部两条细纸带的上下次序：面板与展开整页共用，展开、收起时每条落在对面同一格。
     const slimOrder = useSlimOrder(TABS, tab);
-
+    useGlass();
     // 页签下面的那一页（列表、画布或播放历史）：左缘面板与展开后的画布共用。
     const tabPanel = (
         <div
@@ -557,21 +554,8 @@ const ScratchpadHost: React.FC<ScratchpadHostProps> = ({ isDaylight, playback, q
             <AnimatePresence custom={{ toSheet: isExpanded } satisfies PanelMotionCustom}>
                 {isOpen && !isExpanded && (
                     <motion.aside
-                        data-glass data-glass-light
-                        style={{
-                            backgroundColor: isDaylight
-                                ? "rgba(215,215,215,0.42)"
-                                : "rgba(40, 40, 40, 0.42)",
-                            borderTop: isDaylight
-                                ? "1px solid rgba(255,255,255,0.32)"
-                                : "1px solid rgba(255,255,255,0.22)",
-                            borderBottom: isDaylight
-                                ? "1px solid rgba(255,255,255,0.32)"
-                                : "1px solid rgba(255,255,255,0.22)",
-                            outline: "1px solid rgba(40,40,40,0.2)",
-                            boxShadow: "2px 2px 8px 2px rgba(40,40,40,0.4)",
-                        }}
                         key="scratchpad-panel"
+                        data-glass data-glass-light data-glass-strength="1" data-glass-bend="40" data-glass-blur="0" data-glass-gamma="10"
                         className="scratchpad-drawer is-panel"
                         data-page={tab}
                         data-testid="scratchpad-drawer"
@@ -580,6 +564,9 @@ const ScratchpadHost: React.FC<ScratchpadHostProps> = ({ isDaylight, playback, q
                         custom={{ toSheet: isExpanded, returning: panelReturns && !calm } satisfies PanelMotionCustom}
                         variants={PANEL_VARIANTS}
                         initial={panelReturns && !calm ? 'returning' : 'away'}
+                        style={{
+                            outline: '#333 1px solid'
+                        }}
                         animate="shown"
                         exit="gone"
                         onKeyDown={handleKeyDown}
