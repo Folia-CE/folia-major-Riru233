@@ -49,7 +49,7 @@ export default function WindowControls({
   const [isFullscreen, setIsFullscreen] = useState(false);
   // 窗口带系统红绿灯时，最小化/最大化/关闭由系统接管，这里只剩固定、遥控和全屏。
   const nativeTrafficLights = useNativeTrafficLights();
-  const buttonBaseClass = `flex items-center justify-center h-[calc(100% - 6px)] mb-[6px] transition-all border-[1px] border-[#fff7] border-solid duration-200 text-white outline outline-1 outline-solid outline-[rgba(120,120,120,0.5)] shadow-[2px_2px_8px_2px_rgba(40,40,40,0.4)]
+  const buttonBaseClass = `flex items-center justify-center h-[calc(100% - 6px)] mb-[6px] transition-all border-[1px] border-[#fff7] border-solid duration-200 text-white outline outline-1 outline-solid outline-[rgba(120,120,120,0.5)] shadow-[0px_8px_16px_rgba(40,40,40,0.2)]
   ${
         isMac ? 'before:top-1.5 before:-bottom-0.5' : 'before:top-0.5 before:bottom-0.5'}`
   // 指针是否停在控制栏上：没固定时靠它把按钮留在可见状态，移开就随标题栏一起收起。

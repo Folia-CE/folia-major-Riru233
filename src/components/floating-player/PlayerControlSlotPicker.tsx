@@ -95,13 +95,13 @@ const PlayerControlSlotPicker: React.FC<PlayerControlSlotPickerProps> = ({
             // 和进度条胶囊同一层玻璃，边沿是播放页面板那条 1px 线。
             style={{ left, bottom, width, ...capsuleGlassStyle(isDaylight),
                 borderTop: isDaylight
-                ? "1px solid rgba(255,255,255,0.32)"
-                : "1px solid rgba(255,255,255,0.22)",
+                ? "1px solid #fff6"
+                : "1px solid #fff5",
                 borderBottom: isDaylight
-                ? "1px solid rgba(255,255,255,0.32)"
-                : "1px solid rgba(255,255,255,0.22)",
-                outline: "1px solid rgba(40,40,40,0.2)",
-                boxShadow: "2px 2px 8px 2px rgba(40,40,40,0.4)",
+                ? "1px solid #fff6"
+                : "1px solid #fff5",
+                outline: "1px solid rgba(35,35,35,0.3)",
+                boxShadow: "0px 8px 16px rgba(40,40,40,0.2)",
                 transformOrigin: "bottom right",
              }}
             initial={{ opacity: 0, y: 8, scale: 0.97 }}

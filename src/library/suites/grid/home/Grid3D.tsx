@@ -645,13 +645,13 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
             ? "rgba(215,215,215,0.42)"
             : "rgba(40, 40, 40, 0.42)",
         borderTop: isDaylight
-            ? "1px solid rgba(255,255,255,0.32)"
-            : "1px solid rgba(255,255,255,0.22)",
+            ? "1px solid #fff6"
+            : "1px solid #fff5",
         borderBottom: isDaylight
-            ? "1px solid rgba(255,255,255,0.32)"
-            : "1px solid rgba(255,255,255,0.22)",
-        outline: "1px solid rgba(40,40,40,0.2)",
-        boxShadow: "2px 2px 8px 2px rgba(40,40,40,0.4)",
+            ? "1px solid #fff6"
+            : "1px solid #fff5",
+        outline: "1px solid rgba(35,35,35,0.3)",
+        boxShadow: "0px 8px 16px rgba(40,40,40,0.2)",
         color: isDaylight ? "#000" : "#fff",
     };
 
@@ -693,13 +693,13 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                 ? "rgba(215,215,215,0.42)"
                                 : "rgba(40, 40, 40, 0.42)",
                                 borderTop: isDaylight
-                                ? "1px solid rgba(255,255,255,0.32)"
-                                : "1px solid rgba(255,255,255,0.22)",
+                                ? "1px solid #fff6"
+                                : "1px solid #fff5",
                                 borderBottom: isDaylight
-                                ? "1px solid rgba(255,255,255,0.32)"
-                                : "1px solid rgba(255,255,255,0.22)",
-                                outline: "1px solid rgba(40,40,40,0.2)",
-                                boxShadow: "2px 2px 8px 2px rgba(40,40,40,0.4)",
+                                ? "1px solid #fff6"
+                                : "1px solid #fff5",
+                                outline: "1px solid rgba(35,35,35,0.3)",
+                                boxShadow: "0px 8px 16px rgba(40,40,40,0.2)",
                                 ...headerFadeStyle,
                             }}
                             title={t('ui.options')}
@@ -726,13 +726,13 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                 ? "rgba(215,215,215,0.42)"
                                 : "rgba(40, 40, 40, 0.42)",
                             borderTop: isDaylight
-                                ? "1px solid rgba(255,255,255,0.32)"
-                                : "1px solid rgba(255,255,255,0.22)",
+                                ? "1px solid #fff6"
+                                : "1px solid #fff5",
                             borderBottom: isDaylight
-                                ? "1px solid rgba(255,255,255,0.32)"
-                                : "1px solid rgba(255,255,255,0.22)",
-                            outline: "1px solid rgba(40,40,40,0.2)",
-                            boxShadow: "2px 2px 8px 2px rgba(40,40,40,0.4)",
+                                ? "1px solid #fff6"
+                                : "1px solid #fff5",
+                            outline: "1px solid rgba(35,35,35,0.3)",
+                            boxShadow: "0px 8px 16px rgba(40,40,40,0.2)",
                             ...headerFadeStyle,
                             }}
                         >
@@ -821,10 +821,10 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                 className="absolute -inset-1 rounded-full"
                                 style={{
                                     backgroundColor: isDaylight ? 'rgba(215,215,215,0.42)' : 'rgba(40, 40, 40, 0.42)',
-                                    borderTop: isDaylight ? '1px solid rgba(255,255,255,0.32)' : '1px solid rgba(255,255,255,0.22)',
-                                    borderBottom: isDaylight ? '1px solid rgba(255,255,255,0.32)' : '1px solid rgba(255,255,255,0.22)',
-                                    outline: '1px solid rgba(40,40,40,0.2)',
-                                    boxShadow: '2px 2px 8px 2px rgba(40,40,40,0.4)',
+                                    borderTop: isDaylight ? '1px solid #fff6' : '1px solid #fff5',
+                                    borderBottom: isDaylight ? '1px solid #fff6' : '1px solid #fff5',
+                                    outline: '1px solid rgba(35,35,35,0.3)',
+                                    boxShadow: '0px 8px 16px rgba(40,40,40,0.2)',
                                     ...headerFadeStyle,
                                 }}
                             />
@@ -880,7 +880,7 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                 pointer-events-none 让按下穿透到下面的页签轨道，不挡拖动与点击。 */}
                             <motion.div
                                 aria-hidden="true"
-                                className={`absolute z-10 rounded-full shadow-sm pointer-events-none transition-[background-color,box-shadow] duration-200 ease-out outline outline-1 outline-[rgba(40,40,40,0.2)] ${thumbDragging ? 'bg-transparent z-888 shadow-[2px_2px_8px_2px_rgba(40,40,40,0.4)]' : 'bg-[var(--text-accent)]/40 shadow-[2px_2px_8px_2px_rgba(40,40,40,0.4)]'}`}
+                                className={`absolute z-10 rounded-full shadow-sm pointer-events-none transition-[background-color,box-shadow] duration-200 ease-out outline outline-1 outline-[rgba(35,35,35,0.3)] ${thumbDragging ? 'bg-transparent z-888 shadow-[0px_8px_16px_rgba(40,40,40,0.2)]' : 'bg-[var(--text-accent)]/40 shadow-[0px_8px_16px_rgba(40,40,40,0.2)]'}`}
                                 style={{
                                     // 摇杆的放大与速度形变全部用 width / height 表达、锚点是中心（useHomeTabThumb
                                     // 里补偿好的 left / top），不再用 transform: scale：这样圆角、边框、玻璃
@@ -890,11 +890,11 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                     width: thumbBoxWidth,
                                     height: thumbBoxHeight,
                                     borderTop: isDaylight
-                                        ? "1px solid rgba(255,255,255,0.32)"
-                                        : "1px solid rgba(255,255,255,0.22)",
+                                        ? "1px solid #fff6"
+                                        : "1px solid #fff5",
                                     borderBottom: isDaylight
-                                        ? "1px solid rgba(255,255,255,0.32)"
-                                        : "1px solid rgba(255,255,255,0.22)",
+                                        ? "1px solid #fff6"
+                                        : "1px solid #fff5",
                                     pointerEvents: 'none',
                                     // 按住摇杆（拖动中）时去掉底色，只留摇杆自身的流体玻璃；底色与阴影的进出
                                     // 由上面的 transition 补间，松手复原时不再瞬间跳变。

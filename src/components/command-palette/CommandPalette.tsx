@@ -684,12 +684,12 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                     ? "rgba(215,215,215,0.42)"
                     : "rgba(40, 40, 40, 0.42)",
                 borderTop: isDaylight
-                    ? "1px solid rgba(255,255,255,0.32)"
-                    : "1px solid rgba(255,255,255,0.22)",
+                    ? "1px solid #fff6"
+                    : "1px solid #fff5",
                 borderBottom: isDaylight
-                    ? "1px solid rgba(255,255,255,0.32)"
-                    : "1px solid rgba(255,255,255,0.22)",
-                outline: "1px solid rgba(40,40,40,0.2)",
+                    ? "1px solid #fff6"
+                    : "1px solid #fff5",
+                outline: "1px solid rgba(35,35,35,0.3)",
                 width: "calc(100% - 2px)",
                 margin: 1,
                 color: 'var(--text-primary)',

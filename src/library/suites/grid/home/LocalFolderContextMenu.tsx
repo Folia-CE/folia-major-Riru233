@@ -121,9 +121,9 @@ const LocalFolderContextMenu: React.FC<LocalFolderContextMenuProps> = ({
                 maxHeight: MENU_MAX_HEIGHT,
                 overflowY: 'auto',
                 background: 'rgba(28, 30, 38, 0.72)',
-                borderTop: '1px solid rgba(255,255,255,0.22)',
-                borderBottom: '1px solid rgba(255,255,255,0.22)',
-                outline: '1px solid rgba(40,40,40,0.2)',
+                borderTop: '1px solid #fff5',
+                borderBottom: '1px solid #fff5',
+                outline: '1px solid rgba(35,35,35,0.3)',
                 color: '#fffa',
             }}
             onClick={event => event.stopPropagation()}

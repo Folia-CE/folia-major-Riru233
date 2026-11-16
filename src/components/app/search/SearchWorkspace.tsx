@@ -161,13 +161,13 @@ const SearchWorkspace: React.FC<SearchWorkspaceProps> = ({
                         color: theme.primaryColor,
                         backgroundColor: paperColor,
                         borderTop: isDaylight
-                            ? "1px solid rgba(255,255,255,0.32)"
-                            : "1px solid rgba(255,255,255,0.22)",
+                            ? "1px solid #fff6"
+                            : "1px solid #fff5",
                         borderBottom: isDaylight
-                            ? "1px solid rgba(255,255,255,0.32)"
-                            : "1px solid rgba(255,255,255,0.22)",
-                        outline: "1px solid rgba(40,40,40,0.2)",
-                        boxShadow: "2px 2px 8px 2px rgba(40,40,40,0.4)",
+                            ? "1px solid #fff6"
+                            : "1px solid #fff5",
+                        outline: "1px solid rgba(35,35,35,0.3)",
+                        boxShadow: "0px 8px 16px rgba(40,40,40,0.2)",
                         '--search-ink': theme.primaryColor,
                         '--search-accent': theme.accentColor,
                         '--search-paper': isDaylight ? '#fafafa' : '#08080a',

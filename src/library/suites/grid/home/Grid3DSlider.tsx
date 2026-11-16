@@ -862,7 +862,7 @@ export const Grid3DSlider: React.FC<Grid3DSliderProps> = ({
                                                 onClick={action.onClick}
                                                 disabled={action.disabled}
                                                 title={action.title}
-                            className={`flex h-7 items-center gap-1.5 rounded-full px-3 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${isDaylight ? "border-y border-black/[0.08] bg-[#fff4]" : "border-y border-white/[0.12] bg-[#0004]"} outline outline-1 outline-[rgba(40,40,40,0.2)] shadow-[2px_2px_8px_2px_rgba(40,40,40,0.4)]  ${
+                            className={`flex h-7 items-center gap-1.5 rounded-full px-3 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${isDaylight ? "border-y border-black/[0.08] bg-[#fff4]" : "border-y border-white/[0.12] bg-[#0004]"} outline outline-1 outline-[rgba(35,35,35,0.3)] shadow-[0px_8px_16px_rgba(40,40,40,0.2)]  ${
                             action.active ? chrome.strongText : chrome.softText
                             }`}
                                             >
@@ -961,13 +961,13 @@ export const Grid3DSlider: React.FC<Grid3DSliderProps> = ({
                                                 ? "rgba(255,255,255,0.4)"
                                                 : "rgba(0,0,0,0.4)",
                                             borderTop: isDaylight
-                                                ? "1px solid rgba(255,255,255,0.32)"
-                                                : "1px solid rgba(255,255,255,0.22)",
+                                                ? "1px solid #fff6"
+                                                : "1px solid #fff5",
                                             borderBottom: isDaylight
-                                                ? "1px solid rgba(255,255,255,0.32)"
-                                                : "1px solid rgba(255,255,255,0.22)",
-                                            outline: "1px solid rgba(40,40,40,0.2)",
-                                            boxShadow: "2px 2px 8px 2px rgba(40,40,40,0.4)",
+                                                ? "1px solid #fff6"
+                                                : "1px solid #fff5",
+                                            outline: "1px solid rgba(35,35,35,0.3)",
+                                            boxShadow: "0px 8px 16px rgba(40,40,40,0.2)",
                                             color: 'var(--text-primary)',
                                         };
                                         const renderCardBody = (reflection = false) => (

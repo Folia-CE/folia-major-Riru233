@@ -81,10 +81,10 @@ const VisualizerBackKey: React.FC<VisualizerBackKeyProps> = ({ onBack, isDayligh
             style={{
                 backgroundColor: isDaylight ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)",
                 color: isDaylight ? "#333a" : "#fffa",
-                borderTop: isDaylight ? "1px solid rgba(255,255,255,0.32)" : "1px solid rgba(255,255,255,0.22)",
-                borderBottom: isDaylight ? "1px solid rgba(255,255,255,0.32)" : "1px solid rgba(255,255,255,0.22)",
-                outline: "1px solid rgba(40,40,40,0.2)",
-                boxShadow: "2px 2px 8px 2px rgba(40,40,40,0.4)",
+                borderTop: isDaylight ? "1px solid #fff6" : "1px solid #fff5",
+                borderBottom: isDaylight ? "1px solid #fff6" : "1px solid #fff5",
+                outline: "1px solid rgba(35,35,35,0.3)",
+                boxShadow: "0px 8px 16px rgba(40,40,40,0.2)",
             }}
             className="absolute top-6 left-6 z-30 h-12 w-12 rounded-full flex items-center justify-center transition-colors backdrop-blur-md bg-black/20 hover:bg-white/10 text-white/60 pointer-events-auto"
         >

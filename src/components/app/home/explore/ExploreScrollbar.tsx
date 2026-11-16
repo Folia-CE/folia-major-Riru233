@@ -285,7 +285,7 @@ export const ExploreScrollbar: React.FC<ExploreScrollbarProps> = ({ list: listRe
                     data-glass
                     data-glass-light
                     data-glass-jelly
-                    className={`pointer-events-auto absolute inset-0 touch-none rounded-full outline outline-1 outline-[rgba(40,40,40,0.2)] shadow-[2px_2px_8px_2px_rgba(40,40,40,0.4)] focus-visible:outline-2 transition-transform duration-300 ease-out active:scale-x-[1.8] active:scale-y-[0.99] active:translate-x-[-10px] focus-visible:outline-offset-2 focus-visible:outline-[color:var(--text-primary)] ${isDaylight ? 'border-y border-black/[0.08] bg-white/35' : 'border-y border-white/[0.12] bg-black/35'}`}
+                    className={`pointer-events-auto absolute inset-0 touch-none rounded-full outline outline-1 outline-[rgba(35,35,35,0.3)] shadow-[0px_8px_16px_rgba(40,40,40,0.2)] focus-visible:outline-2 transition-transform duration-300 ease-out active:scale-x-[1.8] active:scale-y-[0.99] active:translate-x-[-10px] focus-visible:outline-offset-2 focus-visible:outline-[color:var(--text-primary)] ${isDaylight ? 'border-y border-black/[0.08] bg-white/35' : 'border-y border-white/[0.12] bg-black/35'}`}
                 >
                     <div
                         ref={thumbRef}

@@ -135,13 +135,13 @@ const CapsuleQuickActions: React.FC<CapsuleQuickActionsProps> = ({
                     ? "rgba(215,215,215,0.42)"
                     : "rgba(40, 40, 40, 0.42)",
                   borderTop: isDaylight
-                    ? "1px solid rgba(255,255,255,0.32)"
-                    : "1px solid rgba(255,255,255,0.22)",
+                    ? "1px solid #fff6"
+                    : "1px solid #fff5",
                   borderBottom: isDaylight
-                    ? "1px solid rgba(255,255,255,0.32)"
-                    : "1px solid rgba(255,255,255,0.22)",
-                  outline: "1px solid rgba(40,40,40,0.2)",
-                  boxShadow: "2px 2px 8px 2px rgba(40,40,40,0.4)",
+                    ? "1px solid #fff6"
+                    : "1px solid #fff5",
+                  outline: "1px solid rgba(35,35,35,0.3)",
+                  boxShadow: "0px 8px 16px rgba(40,40,40,0.2)",
                 }}
             >
                 {/* 紧凑档的这一行把命令在整行里匀开，不挤在左边；命令面板那一格连同分隔线留在最右，和最下一行的挂件位上下对齐。 */}

@@ -164,10 +164,10 @@ export const usePlayerChrome = (props: PlayerChromeProps | undefined, enabled = 
             }}
             className={`absolute ${lowerBackButton ? 'top-12' : 'top-10'} left-6 z-30 h-10 w-10 rounded-full flex items-center justify-center transition-colors backdrop-blur-md bg-black/20 hover:bg-white/10 text-white/60 pointer-events-auto`}
             style={{ 
-                borderTop: "1px solid rgba(255,255,255,0.32)",
-                borderBottom: "1px solid rgba(255,255,255,0.32)",
-                outline: "1px solid rgba(40,40,40,0.2)",
-                boxShadow: "2px 2px 8px 2px rgba(40,40,40,0.4)",
+                borderTop: "1px solid #fff6",
+                borderBottom: "1px solid #fff6",
+                outline: "1px solid rgba(35,35,35,0.3)",
+                boxShadow: "0px 8px 16px rgba(40,40,40,0.2)",
              }}
         >
             <ChevronLeft size={20} />
