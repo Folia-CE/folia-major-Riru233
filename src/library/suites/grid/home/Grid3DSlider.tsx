@@ -954,7 +954,7 @@ export const Grid3DSlider: React.FC<Grid3DSliderProps> = ({
                                         </div>
                                     ) : (() => {
                                         // 卡片
-                                        const cardSurfaceClassName = "rounded-xl border p-4 flex flex-col items-center theme-polaroid-card";
+                                        const cardSurfaceClassName = "rounded-[40px] border p-4 flex flex-col items-center theme-polaroid-card";
                                         const cardSurfaceStyle: React.CSSProperties = {
                                             width: coverSize,
                                             backgroundColor: isDaylight
@@ -973,7 +973,7 @@ export const Grid3DSlider: React.FC<Grid3DSliderProps> = ({
                                         const renderCardBody = (reflection = false) => (
                                             <>
                                                 <div
-                                                    className="w-full aspect-square rounded-lg overflow-hidden relative shadow-inner mb-4 flex items-center justify-center"
+                                                    className="w-full aspect-square rounded-[28.8px] overflow-hidden relative shadow-inner mb-4 flex items-center justify-center"
                                                 >
                                                     {item.coverUrl ? (
                                                         <img src={getSizedCoverUrl(item.coverUrl, coverSize)} alt={typeof displayName === 'string' ? displayName : ''} loading="lazy" decoding="async" className="w-full h-full object-cover pointer-events-none select-none" />
