@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Theme } from '../../../../types';
-import { colorWithAlpha } from '../../colorMix';
+import { colorWithAlpha } from '../../../../utils/colorMix';
 
 // src/components/visualizer/backgrounds/transparent/TransparentBackgroundSettingsCard.tsx
 // Informational card for the transparent shell background; this mode exposes no tuning knobs.

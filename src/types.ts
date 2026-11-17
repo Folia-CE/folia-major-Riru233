@@ -163,7 +163,7 @@ export interface LyricRenderOverride {
   antialias: 'global' | 'on' | 'off';
 }
 
-export type HomeViewTab = 'playlist' | 'local' | 'albums' | 'navidrome' | 'radio' | 'explore';
+export type HomeViewTab = 'playlist' | 'local' | 'albums' | 'navidrome' | 'radio' | 'explore' | 'welfare';
 
 export type PlaybackContext = 'main' | 'stage';
 export type StageSource = 'stage-api' | 'now-playing' | 'playercap';
@@ -1261,7 +1261,8 @@ export const DEFAULT_NOMAND_BACKGROUND_TUNING: NomandBackgroundTuning = {
 export const DEFAULT_LATENT_BACKGROUND_TUNING: LatentBackgroundTuning = {
   displayMode: 'both',
   colorSource: 'cover-theme',
-  dynamicOnlyInPlayer: true,
+  // 新装默认：首页也让隐现跟着动（2026-11-15 用户要求默认关闭「仅在播放页启用动态效果」）。
+  dynamicOnlyInPlayer: false,
   enhancedBeatResponse: true,
   ditheringSpeed: 0.1,
   ditheringAudioSpeed: 1.2,
@@ -1513,6 +1514,7 @@ export interface LocalSong {
   localCoverAssetId?: string; // Content-addressed preferred local cover stored in local_cover_assets
   localCoverSource?: import('./types/localCover').LocalCoverSourceKind;
   localCoverNeedsAssetMigration?: boolean; // Retries local cover hashing/persistence during the next rescan
+  albumContextKey?: string; // Derived on every write (sanitizeLocalSongForStorage); indexed folder + imported album key for import grouping
   replayGain?: number; // ReplayGain track gain in dB
   replayGainTrackGain?: number; // ReplayGain track gain in dB
   replayGainTrackPeak?: number; // ReplayGain track peak ratio

@@ -87,7 +87,9 @@ const { createQqAuthSessionRepository } = require('./qq/qqAuthSessionRepository.
 const { DEFAULT_DISCORD_APPLICATION_ID, createDiscordPresenceController } = require('./discordPresence.cjs');
 const { createVoiceInputPauseMonitor } = require('./voiceInputPause.cjs');
 const { createWindowSystemMenuGuard } = require('./windowSystemMenu.cjs');
+const { createDevToolsShortcutGuard } = require('./devToolsShortcutGuard.cjs');
 const { createMacDockMenu } = require('./macDockMenu.cjs');
+const { createWindowsThumbar } = require('./windowsThumbar.cjs');
 const { createDisplaySleepBlocker } = require('./displaySleepBlocker.cjs');
 const { createVideoExportFileWriter } = require('./videoExportFileWriter.cjs');
 const { finalizeVideoExportFile } = require('./videoExportMp4.cjs');
@@ -102,6 +104,7 @@ const {
   resolveReleaseChannel,
 } = require('./updateChannels.cjs');
 const { discoverUpdateVersion, settleWithin } = require('./updateCheckMirrors.cjs');
+const { createUpdateDownloadPhase } = require('./updateDownloadPhase.cjs');
 const { resolveCacheLimit, selectEvictions } = require('./audioCachePrune.cjs');
 const { removeAudioCacheFileOfSize } = require('./audioCacheRemove.cjs');
 const { createAnalysisHost } = require('./analysis/host.cjs');
@@ -109,6 +112,7 @@ const { createAcousticsHost } = require('./acoustics/host.cjs');
 const { steamAudioLibraryPath } = require('./acoustics/phonon.cjs');
 const { createSceneScreenHost } = require('./scenes/screenCapture.cjs');
 const { createDebugHost, runtimeLine } = require('./debug/debugHost.cjs');
+const { createPerfCheckHost } = require('./perfCheck.cjs');
 const { createCrashLog, installCrashHandlers, flushPageStorage } = require('./debug/crashLog.cjs');
 const { measureLeftovers, removeDownloadedLeftovers } = require('./analysis/modelPaths.cjs');
 const { resolveLinuxPasswordStore } = require('./linuxPasswordStore.cjs');
@@ -149,6 +153,15 @@ const {
   buildSegmentationSystemPrompt,
   parseSegmentationResponse,
 } = require('../shared/lyricSegmentationPrompt.cjs');
+const {
+  KARAOKE_CREDITS_GEMINI_SCHEMA,
+  KARAOKE_CREDITS_JSON_SCHEMA,
+  KARAOKE_CREDITS_MAX_OUTPUT_TOKENS,
+  KARAOKE_CREDITS_SCHEMA_NAME,
+  buildKaraokeCreditsSourcePrompt,
+  buildKaraokeCreditsSystemPrompt,
+  parseKaraokeCreditsResponse,
+} = require('../shared/karaokeCreditsPrompt.cjs');
 const useLinuxGraphicsDebugMode = process.env.ELECTRON_LINUX_PACKAGED_GRAPHICS === 'true';
 const isAppImageRuntime =
   process.platform === 'linux' &&
@@ -2694,7 +2707,7 @@ const x11WallpaperWindows = new WeakSet();
 // and at right-[254px] (titlebar showing the fullscreen button), plus the media buttons that come
 // up to its left while click-through is on.
 const MAIN_WINDOW_CLICK_THROUGH_UNLOCK_HOTSPOT = {
-  width: 172,
+  width: 206,
   height: 40,
   rightInset: 206,
   topInset: 4,
@@ -2778,6 +2791,14 @@ const THUMBAR_BUTTON_ICONS = process.platform === 'win32'
     next: loadThumbarIcon('next.png'),
   }
   : null;
+
+// Windows only; off Windows every call on it does nothing.
+const windowsThumbar = createWindowsThumbar({
+  isSupported: process.platform === 'win32',
+  getWindow: () => mainWindow,
+  icons: THUMBAR_BUTTON_ICONS,
+  sendAction: (action) => sendThumbarAction(action),
+});
 
 // macOS menu bar icons should be monochrome template images with transparent backgrounds.
 function createTrayIconImage() {
@@ -2986,6 +3007,19 @@ const displaySleepBlocker = createDisplaySleepBlocker(powerSaveBlocker);
 // The developer debug module: the runtime log and the memory monitor, both switched from
 // Settings > Developer. Created BEFORE the analysis host, which logs through it.
 createDebugHost({ app, ipcMain, store, BrowserWindow, isTrustedSender: isFirstPartyWindowContents });
+// The performance check's window (electron/perfCheck.cjs, src/components/perfCheck/).
+const perfCheckHost = createPerfCheckHost({
+  app,
+  ipcMain,
+  BrowserWindow,
+  screen,
+  preloadPath: path.join(__dirname, 'preload.cjs'),
+  iconPath: APP_ICON_PATH,
+  loadAppEntry,
+  isolateFirstPartyWindow,
+  isFirstPartyWindowContents,
+  getMainWindow: () => mainWindow,
+});
 logLinuxVulkanChoice(linuxVulkan, linuxGraphicsMode);
 
 const analysisHost = createAnalysisHost({
@@ -3138,10 +3172,6 @@ function setMainWindowFullscreen(win, fullscreen) {
   win.setFullScreen(fullscreen);
 }
 
-function isWindowsThumbarSupported() {
-  return process.platform === 'win32';
-}
-
 function sendThumbarAction(action) {
   if (!mainWindow || mainWindow.isDestroyed()) {
     return;
@@ -3150,51 +3180,12 @@ function sendThumbarAction(action) {
   mainWindow.webContents.send('thumbar-action', action);
 }
 
-function updateWindowThumbarButtons(state = {}) {
-  if (!isWindowsThumbarSupported() || !mainWindow || mainWindow.isDestroyed()) {
-    return false;
-  }
-
-  const {
-    hasActiveTrack = false,
-    canGoPrevious = false,
-    canGoNext = false,
-    isPlaying = false,
-  } = state;
-
-  if (!hasActiveTrack) {
-    try {
-      return mainWindow.setThumbarButtons([]);
-    } catch (error) {
-      console.warn('[Electron] Failed to clear Windows thumbar buttons', error);
-      return false;
-    }
-  }
-
-  try {
-    return mainWindow.setThumbarButtons([
-      {
-        tooltip: 'Previous Track',
-        icon: THUMBAR_BUTTON_ICONS.previous,
-        flags: canGoPrevious ? [] : ['disabled'],
-        click: () => sendThumbarAction('previous'),
-      },
-      {
-        tooltip: isPlaying ? 'Pause' : 'Play',
-        icon: isPlaying ? THUMBAR_BUTTON_ICONS.pause : THUMBAR_BUTTON_ICONS.play,
-        click: () => sendThumbarAction('play-pause'),
-      },
-      {
-        tooltip: 'Next Track',
-        icon: THUMBAR_BUTTON_ICONS.next,
-        flags: canGoNext ? [] : ['disabled'],
-        click: () => sendThumbarAction('next'),
-      },
-    ]);
-  } catch (error) {
-    console.warn('[Electron] Failed to set Windows thumbar buttons', error);
-    return false;
-  }
+// Windows builds a new taskbar button for a window shown after being hidden, and Electron forgets
+// the old thumbar when the window hides (SetThumbarButtonsAdded(false) in native_window_views.cc,
+// #28390), so the next write is what re-adds the buttons. Nothing writes on show, so the cached
+// buttons are replayed here instead of waiting for the next playback change.
+function replayMainWindowThumbarButtons() {
+  return windowsThumbar.replay({ taskbarButtonVisible: !mainWindowSkipTaskbarEnabled });
 }
 
 function getDefaultCacheDirectory() {
@@ -3321,6 +3312,10 @@ function setMainWindowSkipTaskbarEnabled(enabled) {
   mainWindowSkipTaskbarEnabled = Boolean(enabled);
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.setSkipTaskbar(mainWindowSkipTaskbarEnabled);
+    if (!mainWindowSkipTaskbarEnabled) {
+      // The taskbar button is back; Electron re-adds the buttons only when it remembers adding them.
+      replayMainWindowThumbarButtons();
+    }
   }
   refreshTrayMenu();
   return mainWindowSkipTaskbarEnabled;
@@ -4177,6 +4172,10 @@ function isPackagedUpdateRuntime() {
   return app.isPackaged && process.env.ELECTRON_DEV !== 'true' && process.env.NODE_ENV !== 'development';
 }
 
+// Which of the updater's downloads (only the changed blocks, or the whole installer) is running.
+const updateDownloadPhase = createUpdateDownloadPhase();
+let lastUpdateDownloadMode = null;
+
 const updateState = {
   status: 'idle',
   currentVersion: normalizeVersion(app.getVersion()),
@@ -4267,6 +4266,12 @@ function setupAutoUpdater() {
 
   updater.on('update-available', (info) => {
     const version = normalizeVersion(info?.version);
+    updateDownloadPhase.setInstaller(info);
+    if (updateState.status !== 'downloading') {
+      // No download running: the next one, started by the updater itself when auto-update is on, is new.
+      updateDownloadPhase.restart();
+      lastUpdateDownloadMode = null;
+    }
     setUpdateState({
       status: 'available',
       availableVersion: version || null,
@@ -4293,6 +4298,13 @@ function setupAutoUpdater() {
   });
 
   updater.on('download-progress', (progress) => {
+    const { mode, fallback } = updateDownloadPhase.phaseOf(progress);
+    if (mode !== null && mode !== lastUpdateDownloadMode) {
+      console.info(fallback
+        ? '[Updater] Differential download failed, downloading the full installer'
+        : `[Updater] Downloading the update: ${mode}`);
+      lastUpdateDownloadMode = mode;
+    }
     setUpdateState({
       status: 'downloading',
       error: null,
@@ -4300,6 +4312,8 @@ function setupAutoUpdater() {
         percent: typeof progress.percent === 'number' ? progress.percent : 0,
         transferred: progress.transferred,
         total: progress.total,
+        mode,
+        fallback,
       },
       githubFailed: false,
     });
@@ -4396,6 +4410,11 @@ async function downloadAvailableUpdate() {
   }
 
   try {
+    // The updater hands back the running download instead of starting another: only a new one starts over.
+    if (updateState.status !== 'downloading') {
+      updateDownloadPhase.restart();
+      lastUpdateDownloadMode = null;
+    }
     setUpdateState({ status: 'downloading', error: null, downloadProgress: null });
     await updater.downloadUpdate();
   } catch (error) {
@@ -6003,8 +6022,11 @@ function createWindow(options = {}) {
     win = new BrowserWindow({
       ...windowBounds,
       type: useDesktopWindowType ? 'desktop' : undefined,
-      minWidth: 350,
-      minHeight: 100,
+      // 主窗口的最小尺寸：紧凑模式下导航栏、停靠栏和设置面板都要放得下，
+      // 再小就会开始互相挤（600 × 770 是 2026-11-14 定的下限）。
+      // 壁纸模式例外：那一刻窗口就是整块屏幕，720p 之类的屏幕比这个下限还矮，
+      // 套下限会把窗口撑出屏幕，所以壁纸窗沿用宽松的值。
+      ...(useWallpaperGeometry ? { minWidth: 350, minHeight: 100 } : { minWidth: 600, minHeight: 770 }),
       // macOS 正常模式：hidden 标题栏保留系统红绿灯，内容仍铺满整窗；
       // 其余平台（以及 mac 壁纸模式）保持完全无边框。
       ...(useMacNativeTrafficLights
@@ -6177,7 +6199,7 @@ function createWindow(options = {}) {
   // the titlebar corner can temporarily restore mouse interaction even though the lock toggle
   // itself is no longer rendered in wallpaper mode.
   setMainWindowClickThroughEnabled(mainWindowClickThroughEnabled);
-  updateWindowThumbarButtons();
+  windowsThumbar.reset();
   win.on('resize', () => {
     saveWindowState(win, { deferred: true });
   });
@@ -6258,13 +6280,24 @@ function createWindow(options = {}) {
       }
       // The hidden YouTube Music sandbox window would otherwise keep the app from quitting.
       ytmSandbox.destroy();
+      // So would the performance check's window, still running its GPU work.
+      perfCheckHost.close();
       refreshTrayMenu();
     }
   });
-  win.on('show', refreshTrayMenu);
-  win.on('hide', refreshTrayMenu);
+  win.on('show', () => {
+    refreshTrayMenu();
+    replayMainWindowThumbarButtons();
+  });
+  win.on('hide', () => {
+    refreshTrayMenu();
+    windowsThumbar.noteHidden();
+  });
   win.on('minimize', refreshTrayMenu);
-  win.on('restore', refreshTrayMenu);
+  win.on('restore', () => {
+    refreshTrayMenu();
+    replayMainWindowThumbarButtons();
+  });
 
   return win;
 }
@@ -6691,6 +6724,13 @@ app.on('browser-window-created', (_event, window) => windowSystemMenuGuard.attac
 ipcMain.on('key-capture-active', (event, active) => {
   windowSystemMenuGuard.setCapturing(event.sender.id, active === true);
 });
+
+// 打包后的窗口不许开 DevTools：Ctrl+Shift+I（macOS 的 Cmd+Alt+I）在页面和菜单快捷键之前被拦下
+// （devToolsShortcutGuard.cjs）。开发运行时照旧——建窗时 main.cjs 自己 openDevTools。
+if (!isElectronDevRuntime()) {
+  const devToolsShortcutGuard = createDevToolsShortcutGuard();
+  app.on('browser-window-created', (_event, window) => devToolsShortcutGuard.attach(window));
+}
 
 app.on('window-all-closed', () => {
   if (isSwappingMainWindow) {
@@ -7988,12 +8028,7 @@ ipcMain.handle('thumbar-update-buttons', (event, state) => {
 
   // One report feeds both: the Windows taskbar buttons and the macOS Dock menu.
   macDockMenu.setState(state);
-  return updateWindowThumbarButtons({
-    hasActiveTrack: Boolean(state?.hasActiveTrack),
-    canGoPrevious: Boolean(state?.canGoPrevious),
-    canGoNext: Boolean(state?.canGoNext),
-    isPlaying: Boolean(state?.isPlaying),
-  });
+  return windowsThumbar.setState(state);
 });
 
 ipcMain.handle('remote-control-open', (event) => {
@@ -8184,6 +8219,22 @@ ipcMain.handle('remote-control-send-command', (event, command) => {
 
   if (!mainWindow || mainWindow.isDestroyed()) {
     return false;
+  }
+
+  // The remote window's settings key: the settings open in the main window, so it comes up first,
+  // and must take clicks. As the wallpaper it sits under the desktop icons (or lets every click
+  // through on macOS), where a settings dialog could not be used: the key does nothing then.
+  if (command?.type === 'open-remote-settings') {
+    if (isX11WallpaperMode() || isWindowsWallpaperMode() || isMacWallpaperActive) {
+      console.info('[RemoteControl] Settings key ignored: the main window is the wallpaper');
+      return false;
+    }
+    if (mainWindowClickThroughEnabled) {
+      setMainWindowClickThroughEnabled(false);
+      console.info('[RemoteControl] Settings key turned main window click-through off');
+    }
+    focusMainWindow();
+    console.info('[RemoteControl] Settings key opened the remote settings page');
   }
 
   mainWindow.webContents.send('remote-control-command', command);
@@ -8398,7 +8449,7 @@ ipcMain.handle('generate-theme', firstParty('generate-theme', async (event, lyri
 
       let jsonStr = content.trim();
       if (jsonStr.startsWith('```')) {
-        jsonStr = jsonStr.replace(/^```(json)?\n/, '').replace(/\n```$/, '');
+        jsonStr = jsonStr.replace(/^```[A-Za-z0-9_-]*[ \t]*\n?/, '').replace(/\n?```\s*$/, '');
       }
       dualTheme = sanitizeGeneratedDualTheme(JSON.parse(jsonStr));
 
@@ -8515,6 +8566,48 @@ ipcMain.handle('segment-lyrics', firstParty('segment-lyrics', async (event, line
     console.error('[segment-lyrics] failed:', message);
     if (rawResponse) {
       console.error('[segment-lyrics] raw model response:', String(rawResponse).slice(0, 4000));
+    }
+    throw new Error(message);
+  }
+}));
+
+// 读歌词文件开头的「歌曲信息」：把前十几行交给用户配置的模型，让它指出哪几行是歌名/作词/作曲
+// 而不是歌词。提示词和 schema 与 web 那两个端点共用 shared/karaokeCreditsPrompt.cjs。
+ipcMain.handle('detect-karaoke-credits', firstParty('detect-karaoke-credits', async (event, lines) => {
+  let rawResponse = null;
+  try {
+    const sourceLines = Array.isArray(lines) ? lines.map((line) => String(line == null ? '' : line)) : [];
+    if (sourceLines.length === 0) {
+      throw new Error('No lyric lines to read');
+    }
+    if (sourceLines.length > 12) {
+      throw new Error('Too many lines');
+    }
+
+    const useSystemProxy = store.get('USE_SYSTEM_PROXY_FOR_AI') || false;
+    const customFetch = (url, options) => fetchWithOptionalSystemProxy(url, options, useSystemProxy);
+    console.log(`[detect-credits] reading ${sourceLines.length} lines`
+      + ` via ${store.get('AI_PROVIDER') || 'gemini'}${useSystemProxy ? ' (system proxy)' : ''}`);
+
+    rawResponse = await runAiJsonCompletion({
+      store: aiCredentials.settingsView,
+      // 判断哪几行是署名不需要推理：和分词一样把思考关掉，否则预算全花在想上。
+      task: 'credits',
+      systemPrompt: buildKaraokeCreditsSystemPrompt(),
+      sourcePrompt: buildKaraokeCreditsSourcePrompt(sourceLines),
+      schema: KARAOKE_CREDITS_JSON_SCHEMA,
+      schemaName: KARAOKE_CREDITS_SCHEMA_NAME,
+      geminiSchema: KARAOKE_CREDITS_GEMINI_SCHEMA,
+      customFetch,
+      answerTokens: KARAOKE_CREDITS_MAX_OUTPUT_TOKENS,
+    });
+
+    return parseKaraokeCreditsResponse(rawResponse, sourceLines);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    console.error('[detect-credits] failed:', message);
+    if (rawResponse) {
+      console.error('[detect-credits] raw model response:', String(rawResponse).slice(0, 4000));
     }
     throw new Error(message);
   }

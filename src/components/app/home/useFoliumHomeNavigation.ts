@@ -6,6 +6,7 @@ import { resolveFoliumLabel } from '../../../mods/params/params';
 import type { LibraryHomeExtraTab } from '../../../library/core/suite/suite.contract';
 import type { LibraryHomeTabKey } from '../../../library/core/home/homeModel.contract';
 import { useLibraryHomeSurfaceStore } from '../../../library/core/home/useLibraryHomeSurfaceStore';
+import { usePlayingSongLocatorStore } from '../../../stores/usePlayingSongLocatorStore';
 import { useSearchNavigationStore } from '../../../stores/useSearchNavigationStore';
 
 // src/components/app/home/useFoliumHomeNavigation.ts
@@ -59,5 +60,15 @@ export const selectNativeHomeTabFromPage = (key: LibraryHomeTabKey, writeHomeVie
         writeHomeViewTab(key);
     }
     closeFoliumHomeTab();
+    return true;
+};
+
+/**
+ * 从窗口里（更新日志的横幅）去首页的某个页签：页签先切过去，再把首页拉到眼前——只写页签的话，
+ * 人还停在播放页上，看不见切到了哪里。返回页签有没有切过去；句柄拒绝（这个套件没有这一页）时什么都不动。
+ */
+export const openHomeTab = (key: LibraryHomeTabKey): boolean => {
+    if (!selectNativeHomeTabFromPage(key, tab => useSearchNavigationStore.getState().setHomeViewTab(tab))) return false;
+    usePlayingSongLocatorStore.getState().navigator?.navigateToHome();
     return true;
 };

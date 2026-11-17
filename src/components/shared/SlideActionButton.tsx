@@ -276,17 +276,17 @@ export const SlideActionButton: React.FC<SlideActionButtonProps> = ({
         }}
         style={{
           touchAction: docked ? undefined : 'none',
-          boxShadow: "2px 2px 8px 2px rgba(40,40,40,0.4)",
+          boxShadow: "0px 8px 16px rgba(40,40,40,0.2)",
           backgroundColor: isDaylight
             ? "rgba(255,255,255,0.4)"
             : "rgba(0,0,0,0.4)",
           borderTop: isDaylight
-            ? "1px solid rgba(255,255,255,0.32)"
-            : "1px solid rgba(255,255,255,0.22)",
+            ? "1px solid #fff6"
+            : "1px solid #fff5",
           borderBottom: isDaylight
-            ? "1px solid rgba(255,255,255,0.32)"
-            : "1px solid rgba(255,255,255,0.22)",
-          outline: "1px solid rgba(40,40,40,0.2)",
+            ? "1px solid #fff6"
+            : "1px solid #fff5",
+          outline: "1px solid rgba(35,35,35,0.3)",
         }}
         className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg transform absolute right-0 top-0 z-10 disabled:opacity-40 disabled:cursor-default ${isDaylight ? "bg-white/70 text-zinc-900" : "bg-black/40 text-white"}`}
         title={title}

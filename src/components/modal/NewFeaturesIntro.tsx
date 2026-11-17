@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sparkles } from 'lucide-react';
+import type { HomeViewTab } from '../../types';
 import { NEW_FEATURES_RELEASE } from './newFeaturesRelease';
 
 // 在这里编辑当前版本的新功能介绍
@@ -8,12 +9,33 @@ import { NEW_FEATURES_RELEASE } from './newFeaturesRelease';
 // The intro, then the features as the rows of one card. A major update carries a tag above the
 // intro with its codename. It is drawn with the settings kit's variables, so it goes inside a
 // sheet (ReleaseNotesDialog) or the settings window.
-export const NewFeaturesIntro: React.FC = () => {
+// The banner (a release image) opens a home tab: the host passes `onOpenTab`, which closes
+// whatever window the notes are in and selects that tab. No host, no banner.
+type NewFeaturesIntroProps = {
+    onOpenTab?: (tab: HomeViewTab) => void;
+};
+
+export const NewFeaturesIntro: React.FC<NewFeaturesIntroProps> = ({ onOpenTab }) => {
     const { t } = useTranslation();
-    const { i18nKey, features, majorUpdate } = NEW_FEATURES_RELEASE;
+    const { i18nKey, features, majorUpdate, banner } = NEW_FEATURES_RELEASE;
 
     return (
         <>
+            {banner && onOpenTab && (
+                <button
+                    type="button"
+                    data-testid="release-banner"
+                    onClick={() => onOpenTab(banner.targetTab)}
+                    aria-label={t(`${banner.i18nKey}.alt`)}
+                    title={t(`${banner.i18nKey}.hint`)}
+                    className="st-card mb-3 block w-full cursor-pointer overflow-hidden rounded-xl bg-[var(--st-card)] shadow-[0_0_0_1px_var(--st-line)] transition-shadow hover:shadow-[0_0_0_2px_var(--st-accent)] focus-visible:shadow-[0_0_0_2px_var(--st-accent)] focus-visible:outline-none"
+                >
+                    <img src={banner.imageUrl} alt={t(`${banner.i18nKey}.alt`)} className="block w-full" />
+                    <span className="flex items-center justify-end px-2.5 py-1.5 text-[11px] leading-4 text-[color:var(--st-t2)]">
+                        {t(`${banner.i18nKey}.hint`)}
+                    </span>
+                </button>
+            )}
             {majorUpdate && (
                 <span
                     data-testid="release-major-update"

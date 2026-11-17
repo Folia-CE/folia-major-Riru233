@@ -9,6 +9,7 @@ import { isMainAppSurface } from '../../utils/appSurface';
 import { useIsPlayerBottomBarHost } from '../floating-player/PlayerBottomBarLayoutContext';
 import { useGlass } from '../../shinoinject/useGlass';
 import type { VisualizerSharedProps } from './definition';
+import { useGlass } from '@/shinoinject/useGlass';
 
 // src/components/visualizer/usePlayerChrome.tsx
 // The player page's own chrome over the lyrics: the hover-only back button in the page's top-left
@@ -150,10 +151,9 @@ export const usePlayerChrome = (props: PlayerChromeProps | undefined, enabled = 
             updatePlayerPanelGuideHotspot(false);
         },
     };
-
+    useGlass();
     const backButton = onBack ? (
         <motion.button
-            // 液态玻璃：底色、上下两道亮边和外发光都跟着日夜走，glass 自己再补折射与高光。
             data-glass data-glass-light
             type="button"
             aria-label={t('ui.backToHome')}
@@ -168,24 +168,13 @@ export const usePlayerChrome = (props: PlayerChromeProps | undefined, enabled = 
                 event.stopPropagation();
                 onBack();
             }}
-            className={`absolute ${lowerBackButton ? 'top-12' : 'top-6'} left-6 z-30 h-12 w-12 rounded-full flex items-center justify-center transition-colors backdrop-blur-md bg-black/20 hover:bg-white/10 text-white/60 pointer-events-auto`}
-            style={{
-                pointerEvents: isBackButtonVisible ? 'auto' : 'none',
-                backgroundColor: isDaylight
-                    ? 'rgba(255,255,255,0.4)'
-                    : 'rgba(0,0,0,0.4)',
-                color: isDaylight
-                    ? '#333a'
-                    : '#fffa',
-                borderTop: isDaylight
-                    ? '1px solid rgba(255,255,255,0.32)'
-                    : '1px solid rgba(255,255,255,0.22)',
-                borderBottom: isDaylight
-                    ? '1px solid rgba(255,255,255,0.32)'
-                    : '1px solid rgba(255,255,255,0.22)',
-                outline: '1px solid rgba(40,40,40,0.2)',
-                boxShadow: '2px 2px 8px 2px rgba(40,40,40,0.4)',
-            }}
+            className={`absolute ${lowerBackButton ? 'top-12' : 'top-10'} left-6 z-30 h-10 w-10 rounded-full flex items-center justify-center transition-colors backdrop-blur-md bg-black/20 hover:bg-white/10 text-white/60 pointer-events-auto`}
+            style={{ 
+                borderTop: "1px solid #fff6",
+                borderBottom: "1px solid #fff6",
+                outline: "1px solid rgba(35,35,35,0.3)",
+                boxShadow: "0px 8px 16px rgba(40,40,40,0.2)",
+             }}
         >
             <ChevronLeft size={20} />
         </motion.button>

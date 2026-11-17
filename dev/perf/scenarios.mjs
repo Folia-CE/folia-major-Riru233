@@ -28,12 +28,14 @@ const BACKGROUND_HOST_STYLE = 'tilt';
 /** [id, the name the app shows, how it draws] */
 const STYLES = [
     ['classic', 'Luminous', 'DOM'],
+    ['karaoke', '卡拉OK', 'DOM'],
     ['sonnet', '商籁', 'Pixi'],
     ['tempera', 'Tempera', 'Pixi'],
     ['lumiere', '绘光', 'Pixi'],
     ['hanabi', '花火', 'Pixi'],
     ['machi', '町景', 'three.js'],
     ['nebbia', '雾笺', 'WebGL2 + 2D 画布'],
+    ['metaphor', '隐喻', 'three.js'],
     ['cadenza', 'Mindscape', 'DOM + 2D 画布'],
     ['partita', '云阶', 'DOM'],
     ['fume', 'Fume', 'DOM + 2D 画布'],

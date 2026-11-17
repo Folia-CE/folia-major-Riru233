@@ -29,7 +29,6 @@ import { resolvePlayerCapsuleNavigationTarget } from '../hooks/useAppNavigation'
 import { useCapsulePaletteStore } from '../stores/useCapsulePaletteStore';
 import { openCommandPalette } from '../stores/useAppViewStore';
 import { usePlaybackEntryViewStore } from '../stores/usePlaybackEntryViewStore';
-import { usePlaybackStore } from '../stores/usePlaybackStore';
 import { resolveLyricSeekMediaTime } from '../utils/lyrics/lyricSeekTime';
 import { HifiProgressRow } from './hifi/HifiBadge';
 import { useIsHifiRoute } from './hifi/useHifiSignalPath';
@@ -410,9 +409,8 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
     // 播放页上点胶囊本来就在要去的地方，这一下改成把胶囊变成命令面板；播放入口设成歌曲墙时
     // 这一下仍然去墙，不抢原有的跳转。
     const playbackEntryView = usePlaybackEntryViewStore(state => state.playbackEntryView);
-    const isFmMode = usePlaybackStore(state => state.isFmMode);
     const clickOpensPalette = currentView === 'player'
-        && resolvePlayerCapsuleNavigationTarget('player', playbackEntryView, isFmMode) === 'player';
+        && resolvePlayerCapsuleNavigationTarget('player', playbackEntryView) === 'player';
 
     // 手指点胶囊就点出那排的地方（clickOpensPalette），补发的 mouseenter 不再撑开胶囊，撑开交给浮出计时，
     // 不然 4 秒后那排收了胶囊还开着。播放入口设成歌曲墙时手指点不出那排，胶囊照旧靠补发的 mouseenter 撑开，
@@ -958,11 +956,11 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
                         onPointerMove={handlePositionDragMove}
                         onPointerUp={handlePositionDragEnd}
                         onPointerCancel={handlePositionDragEnd}
-                        className={`shadow-2xl overflow-hidden rounded-full relative isolate transition-colors duration-300 select-none
+                        className={`shadow-2xl overflow-hidden relative isolate transition-colors duration-300 select-none
                             ${isPositioning ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
                             ${isCompact
                                 // 紧凑档收起和展开同一个宽度、同一个圆角（展开是圆角卡片，不是更高的胶囊），内边距交给里面的排布。
-                                ? `compact-capsule w-full ${glassBgExpanded}`
+                                ? `rounded-[30px] compact-capsule w-full ${glassBgExpanded} `
                                 : `rounded-full ${showExpanded ? `p-3 ${glassBgExpanded} w-full` : `px-4 py-2 ${glassBgCollapsed} ${COLLAPSED_WIDTH_CLASS}`}`}`}
                         style={{
                             touchAction: isPositioning ? "none" : undefined,
@@ -970,13 +968,13 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
                             ? "rgba(255,255,255,0.4)"
                             : "rgba(0,0,0,0.4)",
                             borderTop: isDaylight
-                            ? "1px solid rgba(255,255,255,0.32)"
-                            : "1px solid rgba(255,255,255,0.22)",
+                            ? "1px solid #fff6"
+                            : "1px solid #fff5",
                             borderBottom: isDaylight
-                            ? "1px solid rgba(255,255,255,0.32)"
-                            : "1px solid rgba(255,255,255,0.22)",
-                            outline: "1px solid rgba(40,40,40,0.2)",
-                            boxShadow: "2px 2px 8px 2px rgba(40,40,40,0.4)",
+                            ? "1px solid #fff6"
+                            : "1px solid #fff5",
+                            outline: "1px solid rgba(35,35,35,0.3)",
+                            boxShadow: "0px 8px 16px rgba(40,40,40,0.2)",
                         }}
                     >
                         {/* 播放时从胶囊底边发出的水光：在胶囊内部，z-index: -1 压在内容下面、

@@ -25,16 +25,19 @@ export const useCollectionResource = ({
 }: UseCollectionResourceParams): CollectionResource | null => {
     const key = descriptor ? resolveCollectionResourceKey(descriptor, currentUserId) : null;
     const isLocal = descriptor?.source === 'local';
+    // 福利集合把曲目直接带在描述上（自带音频，已经在手里）：同样走静态资源，不发请求、没有分页。
+    const welfareTracks = descriptor?.source === 'welfare' ? descriptor.tracks : undefined;
     // 资源被 registry 回收时（例如长时间只 peek 未 retain），换一代重新拿。
     const [peekEpoch, setPeekEpoch] = useState(0);
 
     const resource = useMemo(() => {
         if (!descriptor || !key) return null;
+        if (welfareTracks) return createStaticCollectionResource(key, welfareTracks);
         if (isLocal) return createStaticCollectionResource(key, localTracks ?? []);
         return collectionResourceRegistry.peekOrCreate(key, descriptor, () => createCollectionResource(key, descriptor));
         // descriptor 本身不进依赖：同一个 key 下的描述变化由 ensure 处理（按版本决定是否重新加载）。
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [key, isLocal, localTracks, peekEpoch]);
+    }, [key, isLocal, welfareTracks, localTracks, peekEpoch]);
 
     useEffect(() => {
         if (!resource || resource.kind === 'static') return;

@@ -51,9 +51,9 @@ const DevLibraryRendererSwitch: React.FC<{ sessionKey: string; placement?: keyof
             className={`fixed h-[32px] w-max whitespace-nowrap ${isCompact ? 'bottom-[48px] left-2' : PLACEMENT_CLASS[placement]} z-[120] rounded-full border-current/30 px-2 py-1 text-[11px] leading-[22px]`}
                     style={{
                         backgroundColor: "rgba(40, 40, 40, 0.42)",
-                        borderTop:  "1px solid rgba(255,255,255,0.22)",
-                        borderBottom: "1px solid rgba(255,255,255,0.22)",
-                        outline: "1px solid rgba(40,40,40,0.2)",
+                        borderTop:  "1px solid #fff5",
+                        borderBottom: "1px solid #fff5",
+                        outline: "1px solid rgba(35,35,35,0.3)",
                         color: '#fffa',
                         // 内联值盖掉上面那套 bottom-* 位置类：停靠样式下统一贴着停靠栏的上沿。
                         ...(isDockedPlayerBar ? { bottom: dockedClearance } : null),

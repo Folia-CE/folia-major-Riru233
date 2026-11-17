@@ -77,7 +77,11 @@ const EMPTY: Omit<LibraryArtistSnapshot, 'key'> = {
     hint: 'urgent',
 };
 
-const sourceOf = (descriptor: LibraryCollectionDescriptor): LibraryArtistSource => descriptor.source;
+// 歌手资源只为歌单 / 专辑这类集合打开歌手页时创建；福利集合（welfare，曲目直接带在描述里）不开歌手页，
+// 这里按在线处理只是为了让分支有个值（不会读到本地目录）。
+const sourceOf = (descriptor: LibraryCollectionDescriptor): LibraryArtistSource => (
+    descriptor.source === 'welfare' ? 'online' : descriptor.source
+);
 
 /** 为一个歌手（一个 collectionKey）创建资源。只创建对象，不发请求（请求由 ensure 触发）。 */
 export const createArtistResource = (

@@ -287,9 +287,9 @@ const VerticalHome: React.FC<LibraryHomeSurfaceProps> = (props) => {
     // 数值逐字照抄 grid/home/Grid3D.tsx，改那边时这里要一起改，否则两套界面的质感会对不上。
     const glassChromeStyle: React.CSSProperties = {
         backgroundColor: isDaylight ? 'rgba(215,215,215,0.42)' : 'rgba(40, 40, 40, 0.42)',
-        borderTop: isDaylight ? '1px solid rgba(255,255,255,0.32)' : '1px solid rgba(255,255,255,0.22)',
-        borderBottom: isDaylight ? '1px solid rgba(255,255,255,0.32)' : '1px solid rgba(255,255,255,0.22)',
-        outline: '1px solid rgba(40,40,40,0.2)',
+        borderTop: isDaylight ? '1px solid #fff6' : '1px solid #fff5',
+        borderBottom: isDaylight ? '1px solid #fff6' : '1px solid #fff5',
+        outline: '1px solid rgba(35,35,35,0.3)',
         boxShadow: '2px 2px 8px 2px rgba(40,40,40,0.4)',
     };
 

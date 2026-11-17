@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getAiAdapter, AI_PROVIDER_PRESETS, inferAiProviderFromUrl, modelAlwaysThinks, resolveAiConnection } from '../../../shared/ai/providerRegistry.mjs';
-import { segmentLyricLines } from '../../../shared/lyricSegmentationService.mjs';
+import { segmentLyricLines } from '../../../shared/lyricAiService.mjs';
 import { answered, exhaustedReply, firstBody, rejectedWith, requestsFor, simulate, type AiTask } from './adapterHarness';
 
 // test/unit/ai/glmAdapter.test.ts
@@ -13,7 +13,8 @@ import { answered, exhaustedReply, firstBody, rejectedWith, requestsFor, simulat
 const require = createRequire(import.meta.url);
 const client = require('../../../electron/aiTextClient.cjs');
 
-const TASKS: AiTask[] = ['segmentation', 'theme', 'test'];
+// The asks this adapter's ladders are pinned for; 'credits' reuses the test-sized budget.
+const TASKS = ['segmentation', 'theme', 'test'] as const;
 const ladder = (task: AiTask, model: string) => requestsFor('glm', task, model).map(({ attempt, budget }) => [attempt.label, budget]);
 const adapter = getAiAdapter('glm')!;
 

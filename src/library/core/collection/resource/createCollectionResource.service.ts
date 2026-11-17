@@ -50,5 +50,7 @@ export const resolveCollectionResourceKey = (
 export const createCollectionResource = (key: string, descriptor: LibraryCollectionDescriptor): CollectionResource => {
     if (descriptor.source === 'online') return createOnlineCollectionResource(key, onlineDeps);
     if (descriptor.source === 'navidrome') return createNavidromeCollectionResource(key);
+    // 福利集合与本地集合一样，曲目已经在描述里（宿主也走 createStaticCollectionResource，这里只兜底）。
+    if (descriptor.source === 'welfare') return createStaticCollectionResource(key, descriptor.tracks);
     return createStaticCollectionResource(key, []);
 };

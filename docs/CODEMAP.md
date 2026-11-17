@@ -35,11 +35,11 @@
 | --- | --- |
 | 1024+ | `src/types.ts` |
 | 256+ | `src/types/onlineMusic.ts` |
+| 128+ | `src/components/modal/settings/kit/index.ts` |
 | 128+ | `src/stores/usePlaybackStore.ts` |
 | 128+ | `src/types/ponder.ts` |
 | 128+ | `src/utils/appPlaybackGuards.ts` |
 | 64+ | `src/components/command-palette/types.ts` |
-| 64+ | `src/components/modal/settings/kit/index.ts` |
 | 64+ | `src/components/visualizer/definition.ts` |
 | 64+ | `src/i18n/config.ts` |
 | 64+ | `src/library/core/collection/collection.contract.ts` |
@@ -54,18 +54,19 @@
 | 64+ | `src/types/hifi.ts` |
 | 64+ | `src/utils/lyrics/renderHints.ts` |
 | 32+ | `dev/probes/definition.ts` |
+| 32+ | `src/components/app/playback/currentSong.ts` |
 | 32+ | `src/components/command-palette/commandRegistry.ts` |
 | 32+ | `src/components/modal/settings/kit/kitTheme.ts` |
 | 32+ | `src/components/modal/settings/kit/motion.ts` |
 | 32+ | `src/components/ponder/surfaces/relativeRectStyle.ts` |
 | 32+ | `src/components/ponder/surfaces/surfaceDeclarations.ts` |
 | 32+ | `src/components/visualizer/backgrounds/definition.ts` |
-| 32+ | `src/components/visualizer/colorMix.ts` |
 | 32+ | `src/components/visualizer/hanabi/types.ts` |
 | 32+ | `src/components/visualizer/machi/engine/materials.ts` |
 | 32+ | `src/components/visualizer/registry.tsx` |
 | 32+ | `src/components/visualizer/tuningDefinition.ts` |
 | 32+ | `src/components/visualizer/tuningRegistry.ts` |
+| 32+ | `src/components/visualizer/visualizerSeedHash.ts` |
 | 32+ | `src/components/wall/layout.ts` |
 | 32+ | `src/components/wall/wallSlots.ts` |
 | 32+ | `src/hooks/useReducedMotionFor.ts` |
@@ -79,7 +80,9 @@
 | 32+ | `src/services/onlineMusic/failure/onlineFailureCase.ts` |
 | 32+ | `src/services/onlineMusic/providerRegistry.ts` |
 | 32+ | `src/services/onlineMusic/songMetadata.ts` |
+| 32+ | `src/shinoinject/useGlass.tsx` |
 | 32+ | `src/stores/motionSignals.ts` |
+| 32+ | `src/stores/storagePrimitives.ts` |
 | 32+ | `src/stores/useCollectionNavigationStore.ts` |
 | 32+ | `src/stores/usePlayerChromeSettingsStore.ts` |
 | 32+ | `src/stores/useSettingsModalStore.ts` |
@@ -87,7 +90,9 @@
 | 32+ | `src/stores/useVisualizerSettingsStore.ts` |
 | 32+ | `src/types/localLibrary.ts` |
 | 32+ | `src/types/navidrome.ts` |
+| 32+ | `src/utils/colorMix.ts` |
 | 32+ | `src/utils/coverUrl.ts` |
+| 32+ | `src/utils/errorText.ts` |
 | 32+ | `src/utils/fontStacks.ts` |
 | 32+ | `src/utils/lyricRenderQuality.ts` |
 | 32+ | `src/utils/lyrics/graphemeTiming.ts` |
@@ -106,11 +111,13 @@
 - `dev/probes/artistEntrance.probe.tsx`
 - `dev/probes/audioEffectGrid.probe.tsx`
 - `dev/probes/automixTransitionSwitches.probe.tsx`
+- `dev/probes/bilibiliBv.probe.tsx`
 - `dev/probes/bravaisKinds.probe.tsx`
 - `dev/probes/bravaisPerf.probe.tsx`
 - `dev/probes/collectionGrid.probe.tsx`
 - `dev/probes/collectionMorph.probe.tsx`
 - `dev/probes/coverSizeAudit.probe.tsx`
+- `dev/probes/dockedPlayerBar.probe.tsx`
 - `dev/probes/exploreSurface.probe.tsx`
 - `dev/probes/fmTab.probe.tsx`
 - `dev/probes/foliumSelectField.probe.tsx`
@@ -119,9 +126,11 @@
 - `dev/probes/gridPanelToggle.probe.tsx`
 - `dev/probes/homeBehavior.probe.tsx`
 - `dev/probes/icuFoliaCompare.probe.tsx`
+- `dev/probes/karaokeJitter.probe.tsx`
 - `dev/probes/lattice.probe.tsx`
 - `dev/probes/latticeExit.probe.tsx`
 - `dev/probes/latticePerformance.probe.tsx`
+- `dev/probes/latticeRadio.probe.tsx`
 - `dev/probes/latticeTitle.probe.tsx`
 - `dev/probes/latticeTitleExpansion.probe.tsx`
 - `dev/probes/libraryBehavior.probe.tsx`
@@ -263,7 +272,9 @@
 - `src/components/visualizer/backgrounds/monet/entry.tsx`
 - `src/components/visualizer/backgrounds/nomand/entry.tsx`
 - `src/components/visualizer/backgrounds/sora/entry.tsx`
+- `src/components/visualizer/backgrounds/transparent/entry.tsx`
 - `src/components/visualizer/backgrounds/url/entry.tsx`
+- `src/shinoinject/lab/videoBackground/entry.tsx`
 
 ### `src/components/visualizer/registry.tsx`
 
@@ -274,8 +285,10 @@
 - `src/components/visualizer/diorama/entry.tsx`
 - `src/components/visualizer/fume/entry.tsx`
 - `src/components/visualizer/hanabi/entry.tsx`
+- `src/components/visualizer/karaoke/entry.tsx`
 - `src/components/visualizer/lumiere/entry.tsx`
 - `src/components/visualizer/machi/entry.tsx`
+- `src/components/visualizer/metaphor/entry.tsx`
 - `src/components/visualizer/monet/entry.tsx`
 - `src/components/visualizer/nebbia/entry.tsx`
 - `src/components/visualizer/partita/entry.tsx`
@@ -299,8 +312,10 @@
 - `src/components/visualizer/diorama/tuning.ts`
 - `src/components/visualizer/fume/tuning.ts`
 - `src/components/visualizer/hanabi/tuning.ts`
+- `src/components/visualizer/karaoke/tuning.ts`
 - `src/components/visualizer/lumiere/tuning.ts`
 - `src/components/visualizer/machi/tuning.ts`
+- `src/components/visualizer/metaphor/tuning.ts`
 - `src/components/visualizer/monet/tuning.ts`
 - `src/components/visualizer/nebbia/tuning.ts`
 - `src/components/visualizer/partita/tuning.ts`
@@ -314,6 +329,7 @@
 - `src/library/suites/bravais/entry.ts`
 - `src/library/suites/grid/entry.ts`
 - `src/library/suites/tui/entry.ts`
+- `src/library/suites/vertical/entry.ts`
 
 ### `test/unit/visualizer/tuningBundleTransport.test.ts`
 
@@ -324,8 +340,10 @@
 - `src/components/visualizer/diorama/tuning.ts`
 - `src/components/visualizer/fume/tuning.ts`
 - `src/components/visualizer/hanabi/tuning.ts`
+- `src/components/visualizer/karaoke/tuning.ts`
 - `src/components/visualizer/lumiere/tuning.ts`
 - `src/components/visualizer/machi/tuning.ts`
+- `src/components/visualizer/metaphor/tuning.ts`
 - `src/components/visualizer/monet/tuning.ts`
 - `src/components/visualizer/nebbia/tuning.ts`
 - `src/components/visualizer/partita/tuning.ts`
@@ -350,10 +368,7 @@
 依赖方向没问题，是文件住在了 UI 目录（`src/components/`、`src/library/` 的 suites / app）下面。修法是移动文件，不是改依赖。
 
 - D190 `src/services/obs/visualSettingsConfig.ts` → `src/components/visualizer/tuningRegistry.ts`
-- D190 `src/services/ponder/pagePonderTarget.ts` → `src/components/modal/settings/navigation/settingsAnchorModel.ts`
 - D190 `src/services/sync/settingsSnapshot.ts` → `src/components/visualizer/tuningRegistry.ts`
 - D190 `src/stores/usePlaybackStore.ts` → `src/components/app/playback/createCoverUrlResolver.ts`
-- D190 `src/stores/useSettingsModalStore.ts` → `src/components/command-palette/pinnedCommandPreferences.ts`
 - D190 `src/stores/useVisualizerSettingsStore.ts` → `src/components/visualizer/tuningRegistry.ts`
-- D190 `src/utils/themeColorMath.ts` → `src/components/visualizer/colorMix.ts`
 
