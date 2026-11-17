@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Disc } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { formatGridMapFolderTitle } from '../../../../utils/gridMapFolderPath';
@@ -91,7 +91,7 @@ const DISCRETE_WHEEL_PIXEL_THRESHOLD = 40;
 const DISCRETE_WHEEL_DISTANCE_MULTIPLIER = 3;
 const GRID3D_CARD_GAP = 48;
 // 倒影露出的一段高度（px）：紧贴卡片底边，并在这一段里淡完，所以不会被滚动容器裁出硬边。
-// 聚焦卡是放大过的（scale 1.2），它底边往下多出来的那截也算在可见高度里，48px 仍然够用。
+// 倒影挂在卡片外框下面（外框底边就是卡片的视觉底边），聚焦卡变高变矮都不影响这 48px。
 const GRID3D_REFLECTION_BAND_PX = 48;
 export const GRID3D_WINDOW_RADIUS = 18;
 export const GRID3D_LEAP_CARDS = 4;
@@ -164,6 +164,19 @@ export const getGrid3DCardGeometryKey = (
     firstCardWidth: number,
     firstCardOffsetLeft: number,
 ): string => `${cardCount}:${viewportWidth}:${firstCardWidth}:${firstCardOffsetLeft}`;
+
+// 逐帧写进 style 的尺寸：留两位小数就够了，也避免浮点噪声让每帧都判定为「变了」。
+const roundToHundredth = (value: number) => Math.round(value * 100) / 100;
+
+/**
+ * 卡片阴影按缩放比例跟着走（原来是整张卡一起 scale，阴影也被一起放大）。
+ * 基准值写在 data-grid3d-scaled-shadow 上，格式「y blur spread color」，例如 "8 16 0 rgba(40,40,40,0.2)"。
+ */
+export const getGrid3DScaledShadow = (base: string, scale: number): string => {
+    const [y = '0', blur = '0', spread = '0', ...color] = base.trim().split(/\s+/);
+    const dim = (value: string) => `${roundToHundredth(Number(value) * scale)}px`;
+    return `0 ${dim(y)} ${dim(blur)} ${dim(spread)} ${color.join(' ')}`.trim();
+};
 
 const clampFocusedIndex = (index: number, itemCount: number) => {
     if (itemCount <= 0 || !Number.isFinite(index)) {
@@ -376,6 +389,13 @@ export const Grid3DSlider: React.FC<Grid3DSliderProps> = ({
         ? remainingItemCount * coverSize + Math.max(0, remainingItemCount - 1) * GRID3D_CARD_GAP
         : 0;
 
+    // 卡片未缩放时的高度（只跟封面尺寸、卡片样式、内容三行文字有关），按几何键缓存一次。
+    // 拖动时每帧只读缓存、不量 DOM：内容层始终按自然尺寸排版，它的 offsetHeight 就是卡片原高。
+    const cardMeasureRef = useRef<{ key: string; heights: Map<number, number> }>({
+        key: '',
+        heights: new Map(),
+    });
+
     const updateCardTransforms = useCallback(() => {
         const container = scrollContainerRef.current;
         if (!container) return undefined;
@@ -399,6 +419,14 @@ export const Grid3DSlider: React.FC<Grid3DSliderProps> = ({
                 ? prev
                 : { signature: itemsSignature, start: viewportStart, end: viewportEnd }
         ));
+        // 量出来的高度只在同一套版式下有效：换封面尺寸、换卡片样式、换列表都要重新量。
+        const measureKey = `${itemsSignature}|${coverSize}|${grid3dCardStyle}`;
+        const measured = cardMeasureRef.current;
+        if (measured.key !== measureKey) {
+            measured.key = measureKey;
+            measured.heights.clear();
+        }
+
         for (let i = 0; i < cards.length; i++) {
             const el = cards[i];
             const itemIndex = Number(el.dataset.grid3dIndex);
@@ -407,11 +435,72 @@ export const Grid3DSlider: React.FC<Grid3DSliderProps> = ({
             const tValue = Math.min(pixelDist / maxDist, 1);
 
             const scale = peakScale - (peakScale - minScale) * tValue;
-            const y = -6 * (1 - tValue);
+            // 上浮量原来写在 scale() 里面，会被一起放大；现在单独位移，乘上 scale 才是同样的观感。
+            const y = -6 * (1 - tValue) * scale;
             const z = Math.max(1, Math.round(10 - 9 * tValue));
 
-            el.style.transform = `scale(${scale}) translateY(${y}px)`;
+            // 只留位移：放大/缩小靠下面改 width/height，1px 的边框与 outline 才不会被缩放带粗。
+            el.style.transform = `translateY(${roundToHundredth(y)}px)`;
             el.style.zIndex = String(z);
+
+            // 外框（带边框、outline 的那层）只改 width/height，绝不 scale：1px 的线才能一直是 1px。
+            // 里面的内容层用 zoom 缩放（同样是排版意义上的放大缩小，不是 transform），
+            // 字号、圆角、图文比例都按比例走，外框量出来的尺寸和内容正好对齐。
+            const boxes = el.querySelectorAll<HTMLElement>('[data-grid3d-scaled-box]');
+            const contents = el.querySelectorAll<HTMLElement>('[data-grid3d-scaled-content]');
+            if (boxes.length === 0 || contents.length === 0) continue;
+
+            let naturalHeight = measured.heights.get(itemIndex);
+            if (naturalHeight === undefined) {
+                const content = contents[0];
+                // 有的引擎里 offsetHeight 会带上 zoom 的缩放，量原高时先把它摘掉，量完再放回去。
+                const zoom = content.style.getPropertyValue('zoom');
+                if (zoom) content.style.removeProperty('zoom');
+                const measuredHeight = content.offsetHeight;
+                if (zoom) content.style.setProperty('zoom', zoom);
+                // 还没排版（或被隐藏页签藏着）时是 0：先按封面高度顶着，但不记进缓存，下一帧再量。
+                if (measuredHeight > 0) measured.heights.set(itemIndex, measuredHeight);
+                naturalHeight = measuredHeight > 0 ? measuredHeight : coverSize;
+            }
+
+            // 槽位本身保留卡片原始高度，行高和竖直位置才不会随焦点变大变小而晃。
+            // 这里每次都写：卡片滚出窗口后会被卸载，回来时是新节点，只在首次量到时写，槽位高度就丢了，
+            // 卡片会按 0 高的槽位居中、明显往上飘（滚得快时最容易撞到）。
+            const nextSlotHeight = `${naturalHeight}px`;
+            if (el.style.height !== nextSlotHeight) el.style.height = nextSlotHeight;
+
+            const nextWidth = `${roundToHundredth(coverSize * scale)}px`;
+            const nextHeight = `${roundToHundredth(naturalHeight * scale)}px`;
+            for (let b = 0; b < boxes.length; b += 1) {
+                const box = boxes[b];
+                if (box.style.width !== nextWidth) box.style.width = nextWidth;
+                if (box.style.height !== nextHeight) box.style.height = nextHeight;
+                const baseRadius = box.dataset.grid3dScaledRadius;
+                if (baseRadius) {
+                    const nextRadius = `${roundToHundredth(Number(baseRadius) * scale)}px`;
+                    if (box.style.borderRadius !== nextRadius) box.style.borderRadius = nextRadius;
+                }
+                // 阴影原来跟着 scale 一起放大，不补回来卡片就会显得「偏硬」。
+                const baseShadow = box.dataset.grid3dScaledShadow;
+                if (baseShadow) {
+                    const nextShadow = getGrid3DScaledShadow(baseShadow, scale);
+                    if (box.style.boxShadow !== nextShadow) box.style.boxShadow = nextShadow;
+                }
+            }
+
+            // 倒影那条带子原来也在被缩放的层里，高度同样按比例走。
+            const bands = el.querySelectorAll<HTMLElement>('[data-grid3d-scaled-band]');
+            const nextBandHeight = `${roundToHundredth(GRID3D_REFLECTION_BAND_PX * scale)}px`;
+            for (let d = 0; d < bands.length; d += 1) {
+                if (bands[d].style.height !== nextBandHeight) bands[d].style.height = nextBandHeight;
+            }
+
+            const nextZoom = String(roundToHundredth(scale));
+            for (let c = 0; c < contents.length; c += 1) {
+                if (contents[c].style.getPropertyValue('zoom') !== nextZoom) {
+                    contents[c].style.setProperty('zoom', nextZoom);
+                }
+            }
         }
 
         return closestIndex;
@@ -808,9 +897,9 @@ export const Grid3DSlider: React.FC<Grid3DSliderProps> = ({
     }, [clearProgrammaticScrollState, isInteractive, smoothDiscreteWheelBy, startMomentum, stopMomentum, stopWheelSmoothing]);
 
     // Repaints the fixed card window after layout or focus changes.
-    useEffect(() => {
-        const frameId = requestAnimationFrame(() => updateCardTransforms());
-        return () => cancelAnimationFrame(frameId);
+    // 在布局阶段（而不是下一帧）就同步刷一次：尺寸是量出来才写下去的，等到 rAF 再写，首帧会闪一下原尺寸。
+    useLayoutEffect(() => {
+        updateCardTransforms();
     }, [containerSize, coverSize, edgePadding, isLoading, itemsSignature, windowStart, windowedItems.length, updateCardTransforms]);
 
     useEffect(() => {
@@ -920,8 +1009,11 @@ export const Grid3DSlider: React.FC<Grid3DSliderProps> = ({
                                 <div
                                     key={item.id}
                                     data-grid3d-index={index}
-                                    className="shrink-0 cursor-pointer pointer-events-auto select-none"
-                                    style={{ marginRight: index < items.length - 1 ? GRID3D_CARD_GAP : 0 }}
+                                    className="relative self-start shrink-0 cursor-pointer pointer-events-auto select-none"
+                                    style={{
+                                        width: coverSize,
+                                        marginRight: index < items.length - 1 ? GRID3D_CARD_GAP : 0,
+                                    }}
                                     onClick={() => {
                                         if (!isInteractive || dragDistanceRef.current >= 8) return;
                                         if (isFocused) {
@@ -937,25 +1029,39 @@ export const Grid3DSlider: React.FC<Grid3DSliderProps> = ({
                                     }}
                                 	>
                                     {grid3dCardStyle === 'image' ? (
+                                        // 尺寸由 updateCardTransforms 逐帧改：这层是「外框」，边框、ring、圆角都画在这里，
+                                        // 只用 width/height 变大变小（不用 scale），1px 的线不会跟着变粗；
+                                        // 里面的图片按自然尺寸铺满，靠 zoom 跟着外框缩放。
                                         <div
-                                            className={`aspect-square rounded-2xl overflow-hidden shadow-2xl relative border border-white/10 ${
+                                            data-grid3d-scaled-box
+                                            data-grid3d-scaled-radius="16"
+                                            data-grid3d-scaled-shadow="25 50 -12 rgba(0,0,0,0.25)"
+                                            className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square rounded-2xl overflow-hidden shadow-2xl border border-white/10 ${
                                                 isFocused ? 'ring-2 ring-white/30' : ''
                                             }`}
                                             style={{ width: coverSize, height: coverSize }}
                                         >
-                                            {item.coverUrl ? (
-                                                <img src={getSizedCoverUrl(item.coverUrl, coverSize)} alt={typeof displayName === 'string' ? displayName : ''} loading="lazy" decoding="async" className="w-full h-full object-cover pointer-events-none select-none" />
-                                            ) : (
-                                                <div className="w-full h-full  flex items-center justify-center">
-                                                    <Disc size={64} className="opacity-20" />
-                                                </div>
-                                            )}
-                                            <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity" />
+                                            <div
+                                                data-grid3d-scaled-content
+                                                className="relative w-full h-full"
+                                                style={{ width: coverSize, height: coverSize }}
+                                            >
+                                                {item.coverUrl ? (
+                                                    <img src={getSizedCoverUrl(item.coverUrl, coverSize)} alt={typeof displayName === 'string' ? displayName : ''} loading="lazy" decoding="async" className="w-full h-full object-cover pointer-events-none select-none" />
+                                                ) : (
+                                                    <div className="w-full h-full  flex items-center justify-center">
+                                                        <Disc size={64} className="opacity-20" />
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity" />
+                                            </div>
                                         </div>
                                     ) : (() => {
-                                        // 卡片
-                                        const cardSurfaceClassName = "rounded-[40px] border p-4 flex flex-col items-center theme-polaroid-card";
-                                        const cardSurfaceStyle: React.CSSProperties = {
+                                        // 卡片表面（背景、1px 边框与 outline、圆角、阴影）挂在只改尺寸的外框上：
+                                        // 拖动时外框只用 width/height 变大变小，1px 的 outline 不会像 scale 那样变粗；
+                                        // 内容层按自然尺寸排版、用 zoom 跟着缩放，字与图的比例和以前一致。
+                                        const cardSurfaceClassName = "rounded-[40px] border theme-polaroid-card";
+                                        const surfaceStyle: React.CSSProperties = {
                                             width: coverSize,
                                             backgroundColor: isDaylight
                                                 ? "rgba(255,255,255,0.4)"
@@ -966,11 +1072,18 @@ export const Grid3DSlider: React.FC<Grid3DSliderProps> = ({
                                             borderBottom: isDaylight
                                                 ? "1px solid #fff6"
                                                 : "1px solid #fff5",
+                                            
                                             outline: "1px solid rgba(35,35,35,0.3)",
-                                            boxShadow: "0px 8px 16px rgba(40,40,40,0.2)",
                                             color: 'var(--text-primary)',
+                                            // theme-polaroid-card 自带 transition: all，会把逐帧改的尺寸也一起缓动，
+                                            // 卡片就会追不上滚动。只留颜色这些该有过渡的属性（阴影每帧都在写，不能进过渡）。
+                                            transitionProperty: 'border-color, outline-color, opacity',
                                         };
-                                        const renderCardBody = (reflection = false) => (
+                                        const cardContentStyle: React.CSSProperties = {
+                                            width: coverSize,
+                                            padding: 16,
+                                        };
+                                        const renderCardBody = () => (
                                             <>
                                                 <div
                                                     className="w-full aspect-square rounded-[28.8px] overflow-hidden relative shadow-inner mb-4 flex items-center justify-center"
@@ -1005,18 +1118,27 @@ export const Grid3DSlider: React.FC<Grid3DSliderProps> = ({
                                         // 倒影只留贴着卡片的一小段（GRID3D_REFLECTION_BAND_PX），并且在这一段里就淡完：
                                         // 整张镜像铺出去的话，滚动容器的 overflow-y-hidden 会在中途把它切掉，
                                         // 倒影断成一条硬边，看着割裂；带子外的内容本来就该是全透明的，被裁掉也看不出来。
+                                        // 倒影那条带子挂在外框底部（top-full），外框多大它就在多大卡片的下面。
                                         return (
-                                            <div className="relative" style={{ width: coverSize }}>
+                                            <div
+                                                {...{ [MORPH_FRAME_ATTR]: '' }}
+                                                data-glass data-glass-light
+                                                data-grid3d-scaled-box
+                                                data-grid3d-scaled-radius="40"
+                                                data-grid3d-scaled-shadow="8 16 0 rgba(40,40,40,0.2)"
+                                                className={`${cardSurfaceClassName} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center shadow-lg hover:shadow-2xl`}
+                                                style={{ ...surfaceStyle, boxShadow: "0px 8px 16px rgba(40,40,40,0.2)" }}
+                                            >
                                                 <div
-                                                    {...{ [MORPH_FRAME_ATTR]: '' }}
-                                                    data-glass data-glass-light
-                                                    className={`${cardSurfaceClassName} shadow-lg hover:shadow-2xl`}
-                                                    style={cardSurfaceStyle}
+                                                    data-grid3d-scaled-content
+                                                    className="shrink-0 flex flex-col items-center"
+                                                    style={cardContentStyle}
                                                 >
                                                     {renderCardBody()}
                                                 </div>
                                                 <div
                                                     aria-hidden="true"
+                                                    data-grid3d-scaled-band
                                                     className="pointer-events-none select-none absolute inset-x-0 top-full overflow-hidden"
                                                     style={{
                                                         height: GRID3D_REFLECTION_BAND_PX,
@@ -1025,20 +1147,25 @@ export const Grid3DSlider: React.FC<Grid3DSliderProps> = ({
                                                     }}
                                                 >
                                                     <div
-                                                        className={`${cardSurfaceClassName}`}
+                                                        data-grid3d-scaled-box
+                                                        data-grid3d-scaled-radius="40"
+                                                        className={`${cardSurfaceClassName} absolute left-0 top-0 flex items-center justify-center`}
                                                         style={{
-                                                            ...cardSurfaceStyle,
-                                                            position: 'absolute',
-                                                            left: 0,
-                                                            right: 0,
-                                                            top: 0,
+                                                            ...surfaceStyle,
                                                             boxShadow: 'none',
                                                             opacity: isDaylight ? 0.35 : 0.5,
-                                                            transform: 'scaleY(-1)',
+                                                            // 镜像用翻转，不用缩放：缩小放大全部交给 zoom / width / height。
+                                                            transform: 'rotateX(180deg)',
                                                             transformOrigin: 'center',
                                                         }}
                                                     >
-                                                        {renderCardBody(true)}
+                                                        <div
+                                                            data-grid3d-scaled-content
+                                                            className="shrink-0 flex flex-col items-center"
+                                                            style={cardContentStyle}
+                                                        >
+                                                            {renderCardBody()}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     getGrid3DCardGeometryKey,
     getGrid3DItemsSignature,
+    getGrid3DScaledShadow,
     getGrid3DTargetScrollLeft,
     getGrid3DWindowRange,
     getGrid3DSliderDisplayName,
@@ -101,6 +102,22 @@ describe('getGrid3DCardGeometryKey', () => {
 
     it('changes when cards are appended by progressive loading', () => {
         expect(getGrid3DCardGeometryKey(42, 1280, 218, 531)).not.toBe(baseline);
+    });
+});
+
+describe('getGrid3DScaledShadow', () => {
+    // 卡片改成「外框改尺寸 + 内容 zoom」之后，阴影不再被 transform 一起放大，
+    // 这里让它按同样的比例走，观感才和以前一致。
+    it('scales offset, blur and spread by the card scale', () => {
+        expect(getGrid3DScaledShadow('8 16 0 rgba(40,40,40,0.2)', 1.2))
+            .toBe('0 9.6px 19.2px 0px rgba(40,40,40,0.2)');
+        expect(getGrid3DScaledShadow('25 50 -12 rgba(0,0,0,0.25)', 0.5))
+            .toBe('0 12.5px 25px -6px rgba(0,0,0,0.25)');
+    });
+
+    it('keeps the shadow of an unscaled card exactly as authored', () => {
+        expect(getGrid3DScaledShadow('8 16 0 rgba(40,40,40,0.2)', 1))
+            .toBe('0 8px 16px 0px rgba(40,40,40,0.2)');
     });
 });
 
