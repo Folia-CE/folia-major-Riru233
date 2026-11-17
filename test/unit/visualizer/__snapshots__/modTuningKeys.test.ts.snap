@@ -284,6 +284,81 @@ exports[`mod tuning keys > are pinned, so a renamed or dropped key is a visible 
       "type": "boolean",
     },
   },
+  "karaoke": {
+    "creditsAdvanceSeconds": {
+      "max": 10,
+      "min": 0,
+      "step": 0.1,
+      "type": "number",
+    },
+    "fontScale": {
+      "max": 2,
+      "min": 0.5,
+      "type": "number",
+    },
+    "fontStyle": {
+      "options": [
+        "theme",
+        "sans",
+        "serif",
+        "mono",
+      ],
+      "type": "choice",
+    },
+    "fontWeight": {
+      "max": 900,
+      "min": 100,
+      "step": 100,
+      "type": "number",
+    },
+    "italic": {
+      "type": "boolean",
+    },
+    "leadInDotSize": {
+      "max": 40,
+      "min": 4,
+      "type": "number",
+    },
+    "leadInGapSeconds": {
+      "max": 10,
+      "min": 0.1,
+      "step": 0.1,
+      "type": "number",
+    },
+    "leadInSeconds": {
+      "max": 60,
+      "min": 0,
+      "step": 0.5,
+      "type": "number",
+    },
+    "overflowMode": {
+      "options": [
+        "scroll",
+        "wrap",
+      ],
+      "type": "choice",
+    },
+    "pageAnimation": {
+      "type": "boolean",
+    },
+    "progressStyle": {
+      "options": [
+        "sweep",
+        "fade",
+        "jump",
+      ],
+      "type": "choice",
+    },
+    "strokeWidth": {
+      "max": 10,
+      "min": 0,
+      "step": 0.5,
+      "type": "number",
+    },
+    "traditionalScript": {
+      "type": "boolean",
+    },
+  },
   "lumiere": {
     "audioResponse": {
       "max": 2,
@@ -453,6 +528,50 @@ exports[`mod tuning keys > are pinned, so a renamed or dropped key is a visible 
         "fog",
       ],
       "type": "choice",
+    },
+  },
+  "metaphor": {
+    "blobs": {
+      "max": 2,
+      "min": 0,
+      "type": "number",
+    },
+    "cameraMotion": {
+      "max": 2,
+      "min": 0,
+      "type": "number",
+    },
+    "cutPace": {
+      "max": 2,
+      "min": 0.4,
+      "type": "number",
+    },
+    "flip": {
+      "type": "boolean",
+    },
+    "flow": {
+      "max": 2,
+      "min": 0,
+      "type": "number",
+    },
+    "grain": {
+      "max": 2,
+      "min": 0,
+      "type": "number",
+    },
+    "halftone": {
+      "max": 2.5,
+      "min": 0.5,
+      "type": "number",
+    },
+    "keywordColors": {
+      "type": "boolean",
+    },
+    "negative": {
+      "type": "boolean",
+    },
+    "transitions": {
+      "type": "boolean",
     },
   },
   "monet": {

@@ -104,19 +104,24 @@ export type LibraryHomeTabVisibility = {
 };
 
 /**
- * 一级页签：顺序是 歌单、电台、探索、专辑、本地、Navidrome；隐藏的页签不出现，不可用的带原因。
+ * 一级页签：顺序是 歌单、电台、探索、专辑、本地、Navidrome、福利；隐藏的页签不出现，不可用的带原因。
  * 探索只在平台有推荐页时出现（没有时不是「不可用」，是没有这一页）。
+ * 福利（仓库自带整首音频的几首歌，见 app/welfareHome）只给支持这一页的 suite（网格与 bravais）：
+ * 它既不是在线来源也不依赖账户，`includeWelfare` 为 false 的 suite（TUI、vertical）里不出现。
  */
 export const resolveHomeTabs = ({
     visibility,
     navidromeEnabled,
     online,
     localAvailability,
+    includeWelfare = false,
 }: {
     visibility: LibraryHomeTabVisibility;
     navidromeEnabled: boolean;
     online: Pick<LibraryHomeOnlineSource, 'providerLabel' | 'canUsePlaylists' | 'canUseAlbums' | 'canUseRadio' | 'canUseExplore'>;
     localAvailability: LibraryHomeLocalAvailability;
+    /** 这套 suite 的首页画不画「福利」页签。 */
+    includeWelfare?: boolean;
 }): LibraryHomeTab[] => [
     ...(visibility.playlist ? [{ key: 'playlist' as const, label: { key: 'home.playlists' }, disabledReason: resolveOnlineTabUnavailableReason(online, 'playlist') }] : []),
     ...(visibility.radio ? [{ key: 'radio' as const, label: { key: 'home.radioTab' }, disabledReason: resolveOnlineTabUnavailableReason(online, 'radio') }] : []),
@@ -124,6 +129,7 @@ export const resolveHomeTabs = ({
     ...(visibility.albums ? [{ key: 'albums' as const, label: { key: 'home.albums' }, disabledReason: resolveOnlineTabUnavailableReason(online, 'albums') }] : []),
     ...(visibility.local ? [{ key: 'local' as const, label: { key: 'localMusic.folder' }, disabledReason: resolveLocalUnavailableReason(localAvailability) }] : []),
     ...(navidromeEnabled ? [{ key: 'navidrome' as const, label: { key: 'navidrome.title', fallback: 'Navidrome' } }] : []),
+    ...(includeWelfare ? [{ key: 'welfare' as const, label: { key: 'home.welfare' } }] : []),
 ];
 
 /**

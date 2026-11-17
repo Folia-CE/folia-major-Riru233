@@ -4,7 +4,14 @@ import vercelGenerateOpenAITheme from '../../../api-ts/generate-theme_openai';
 import builtGenerateGeminiTheme from '../../../api/generate-theme.js';
 import builtGenerateOpenAITheme from '../../../api/generate-theme_openai.js';
 import { resetLearnedAttempts } from '../../../shared/ai/attemptRunner.mjs';
-import { segmentLyricLines } from '../../../shared/lyricSegmentationService.mjs';
+import { detectKaraokeCredits, readCreditLines, segmentLyricLines } from '../../../shared/lyricAiService.mjs';
+import {
+    KARAOKE_CREDITS_GEMINI_GENERATION_CONFIG,
+    KARAOKE_CREDITS_JSON_SCHEMA,
+    KARAOKE_CREDITS_SCHEMA_NAME,
+    buildKaraokeCreditsSourcePrompt,
+    buildKaraokeCreditsSystemPrompt,
+} from '../../../shared/karaokeCreditsPrompt.mjs';
 import {
     SEGMENTATION_GEMINI_GENERATION_CONFIG,
     SEGMENTATION_JSON_SCHEMA,
@@ -41,6 +48,28 @@ const recordOpenAi = (content: string) => {
     const fetchImpl = async (url: string, init: any) => {
         requests.push({ url, method: init.method, headers: init.headers, body: JSON.parse(init.body) });
         return Response.json({ choices: [{ finish_reason: 'stop', message: { content } }] });
+    };
+    return { requests, fetchImpl: fetchImpl as unknown as typeof fetch };
+};
+
+/** A fake fetch that answers a forced function call, the way a tool-capable endpoint does. */
+const recordOpenAiToolCall = (answer: unknown, name = KARAOKE_CREDITS_SCHEMA_NAME) => {
+    const requests: Recorded[] = [];
+    const fetchImpl = async (url: string, init: any) => {
+        requests.push({ url, method: init.method, headers: init.headers, body: JSON.parse(init.body) });
+        return Response.json({
+            choices: [{
+                finish_reason: 'stop',
+                message: {
+                    content: '',
+                    tool_calls: [{
+                        id: 'call_1',
+                        type: 'function',
+                        function: { name, arguments: JSON.stringify(answer) },
+                    }],
+                },
+            }],
+        });
     };
     return { requests, fetchImpl: fetchImpl as unknown as typeof fetch };
 };
@@ -294,5 +323,98 @@ describe('a lyric segmentation from the service both /api/segment-lyrics routes 
             },
         }]);
         expect(boundaries).toEqual([['la ', 'la']]);
+    });
+});
+
+describe('a song credits read from the same service', () => {
+    const LINES = ['Neon River - Probe', 'Lyrics by Ann Lee', 'Music by Bo Chen'];
+    const ANSWER = {
+        hiddenLines: [1, 2, 3],
+        title: 'Neon River',
+        lyricist: 'Ann Lee',
+        composer: 'Bo Chen',
+    };
+
+    it('forces a function call whose arguments are the JSON shape, instead of asking for JSON in the prompt', async () => {
+        const { requests, fetchImpl } = recordOpenAiToolCall(ANSWER);
+
+        const credits = await detectKaraokeCredits(LINES, { OPENAI_API_KEY: KEY }, fetchImpl);
+
+        expect(requests).toHaveLength(1);
+        expect(requests[0].body.messages).toEqual([
+            { role: 'system', content: buildKaraokeCreditsSystemPrompt() },
+            { role: 'user', content: buildKaraokeCreditsSourcePrompt(LINES) },
+        ]);
+        // 结构由协议钉住：函数就是答案的形状，模型只能按这个 schema 调用。
+        expect(requests[0].body.tools).toEqual([{
+            type: 'function',
+            function: {
+                name: KARAOKE_CREDITS_SCHEMA_NAME,
+                description: 'Return the answer as the arguments of this function.',
+                parameters: KARAOKE_CREDITS_JSON_SCHEMA,
+            },
+        }]);
+        expect(requests[0].body.tool_choice).toEqual({
+            type: 'function',
+            function: { name: KARAOKE_CREDITS_SCHEMA_NAME },
+        });
+        // 有了强制调用就不再发 response_format（两者会互相矛盾）。
+        expect(requests[0].body.response_format).toBeUndefined();
+        // 行号是 1 起算的，回来时已经换成 0 起算的下标。
+        expect(credits.hiddenIndexes).toEqual([0, 1, 2]);
+        expect(credits).toMatchObject({ title: 'Neon River', lyricist: 'Ann Lee', composer: 'Bo Chen' });
+    });
+
+    it('falls back to plain JSON mode when the endpoint refuses tools', async () => {
+        const requests: Recorded[] = [];
+        const fetchImpl = (async (url: string, init: any) => {
+            const body = JSON.parse(init.body);
+            requests.push({ url, method: init.method, headers: init.headers, body });
+            if (body.tools) {
+                return Response.json(
+                    { error: { message: 'Unsupported parameter: tools', param: 'tools' } },
+                    { status: 400 },
+                );
+            }
+            return Response.json({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(ANSWER) } }] });
+        }) as unknown as typeof fetch;
+
+        const credits = await detectKaraokeCredits(LINES, { OPENAI_API_KEY: KEY }, fetchImpl);
+
+        expect(requests).toHaveLength(2);
+        expect(requests[1].body.tools).toBeUndefined();
+        expect(requests[1].body.response_format).toEqual({
+            type: 'json_schema',
+            json_schema: { name: KARAOKE_CREDITS_SCHEMA_NAME, strict: true, schema: KARAOKE_CREDITS_JSON_SCHEMA },
+        });
+        expect(credits.hiddenIndexes).toEqual([0, 1, 2]);
+    });
+
+    it('reads an answer the model wrapped in a Markdown fence', async () => {
+        // 端点无视了结构化请求、照样把 JSON 包进 ```json 里：这是用户实际遇到的那种回答。
+        const { fetchImpl } = recordOpenAi(`\`\`\`json\n${JSON.stringify(ANSWER)}\n\`\`\``);
+
+        const credits = await detectKaraokeCredits(LINES, { OPENAI_API_KEY: KEY }, fetchImpl);
+
+        expect(credits).toMatchObject({ hiddenIndexes: [0, 1, 2], title: 'Neon River' });
+    });
+
+    it('to Gemini when the deployment has its key', async () => {
+        const requests: Recorded[] = [];
+        const fetchImpl = (async (url: string, init: any) => {
+            requests.push({ url, method: init.method, headers: init.headers, body: JSON.parse(init.body) });
+            return Response.json({ candidates: [{ content: { parts: [{ text: JSON.stringify(ANSWER) }] } }] });
+        }) as unknown as typeof fetch;
+
+        const credits = await detectKaraokeCredits(LINES, { GEMINI_API_KEY: KEY }, fetchImpl);
+
+        expect(requests[0].body.generationConfig).toEqual(KARAOKE_CREDITS_GEMINI_GENERATION_CONFIG);
+        expect(credits.hiddenIndexes).toEqual([0, 1, 2]);
+    });
+
+    it('refuses a lyric sample longer than the prompt is sized for', () => {
+        const tooMany = Array.from({ length: 20 }, (_, index) => `line ${index}`);
+
+        expect(() => readCreditLines({ lines: tooMany })).toThrow('Too many lines');
     });
 });

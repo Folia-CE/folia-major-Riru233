@@ -160,13 +160,13 @@ body:lang(vi) {
 /* Polaroid Card theme-adaptive styles */
 .theme-polaroid-card {
   /* background-color: color-mix(in srgb, var(--bg-color) 95%, transparent) !important; */
-  border-color: color-mix(in srgb, var(--text-primary) 5%, transparent) !important;
+  border-color: transparent;
   color: var(--text-primary) !important;
   transition: all 0.3s ease;
 }
 
 .theme-polaroid-card:hover {
-  border-color: color-mix(in srgb, var(--text-primary) 32%, transparent) !important;
+  border-color: color-mix(in srgb, #fffa 32%, transparent) !important;
 }
 
 /* Glass panel (search box, sidebar) theme-adaptive styles */

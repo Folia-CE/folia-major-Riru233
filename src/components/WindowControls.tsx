@@ -49,7 +49,7 @@ export default function WindowControls({
   const [isFullscreen, setIsFullscreen] = useState(false);
   // 窗口带系统红绿灯时，最小化/最大化/关闭由系统接管，这里只剩固定、遥控和全屏。
   const nativeTrafficLights = useNativeTrafficLights();
-  const buttonBaseClass = `flex items-center justify-center h-[calc(100% - 6px)] mb-[6px] transition-all border-[1px] border-[#fff7] border-solid duration-200 text-white outline outline-1 outline-solid outline-[rgba(120,120,120,0.5)] shadow-[2px_2px_8px_2px_rgba(40,40,40,0.4)]
+  const buttonBaseClass = `flex items-center justify-center h-[calc(100% - 6px)] mb-[6px] transition-all border-[1px] border-[#fff7] border-solid duration-200 text-white outline outline-1 outline-solid outline-[rgba(120,120,120,0.5)] shadow-[0px_8px_16px_rgba(40,40,40,0.2)]
   ${
         isMac ? 'before:top-1.5 before:-bottom-0.5' : 'before:top-0.5 before:bottom-0.5'}`
   // 指针是否停在控制栏上：没固定时靠它把按钮留在可见状态，移开就随标题栏一起收起。
@@ -347,9 +347,9 @@ export default function WindowControls({
     <button
       data-glass
       data-glass-light
-      data-glass-strength="0.8"
+      data-glass-strength="8"
       data-glass-blur="1"
-      data-glass-bend="5"
+      data-glass-bend="120"
       data-control="pin"
       className={`relative ${pinBtnClass}`}
       tabIndex={standardControlsVisible ? 0 : -1}
@@ -376,9 +376,9 @@ export default function WindowControls({
   const remoteControl = (
     <button
       data-glass
-      data-glass-strength="0.8"
+      data-glass-strength="8"
       data-glass-blur="1"
-      data-glass-bend="5"
+      data-glass-bend="120"
       data-control="remote"
       className={`relative ${remoteBtnClass}`}
       title={t("ui.remoteControl")}
@@ -393,9 +393,9 @@ export default function WindowControls({
   const fullscreenControl = hideFullscreenButton ? null : (
     <button
       data-glass
-      data-glass-strength="0.8"
+      data-glass-strength="8"
       data-glass-blur="1"
-      data-glass-bend="5"
+      data-glass-bend="120"
       data-control="fullscreen"
       className={`relative ${remoteBtnClass}`}
       tabIndex={standardControlsVisible ? 0 : -1}
@@ -423,9 +423,9 @@ export default function WindowControls({
   const minimizeControl = (
     <button
       data-glass
-      data-glass-strength="0.8"
+      data-glass-strength="8"
       data-glass-blur="1"
-      data-glass-bend="5"
+      data-glass-bend="120"
       data-control="minimize"
       className={`relative ${btnClass}`}
       tabIndex={standardControlsVisible ? 0 : -1}
@@ -441,9 +441,9 @@ export default function WindowControls({
   const maximizeControl = isFullscreen ? null : (
     <button
       data-glass
-      data-glass-strength="0.8"
+      data-glass-strength="8"
       data-glass-blur="1"
-      data-glass-bend="5"
+      data-glass-bend="120"
       data-control="maximize"
       className={`relative ${btnClass}`}
       tabIndex={standardControlsVisible ? 0 : -1}
@@ -504,9 +504,9 @@ export default function WindowControls({
   const closeControl = (
     <button
       data-glass
-      data-glass-strength="0.8"
+      data-glass-strength="8"
       data-glass-blur="1"
-      data-glass-bend="5"
+      data-glass-bend="120"
       data-control="close"
       className={`relative ${closeBtnClass}`}
       tabIndex={standardControlsVisible ? 0 : -1}

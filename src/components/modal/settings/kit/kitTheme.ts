@@ -25,7 +25,7 @@ export const settingsTokens = (isDaylight: boolean, theme?: Theme): CSSPropertie
     const accent = theme?.accentColor || (isDaylight ? '#18181b' : '#f4f4f5');
     return {
         '--st-win': isDaylight ? '#f3f3f4' : '#1a1a1d',
-        '--st-side': isDaylight ? '#e9e9eb' : '#141416',
+        '--st-side': isDaylight ? '#e9e9eb66' : '#14141666',
         '--st-card': isDaylight ? '#ffffff' : '#232327',
         '--st-menu': isDaylight ? '#ffffffaa' : '#2b2b30aa',
         '--st-raise': isDaylight ? '#ffffff' : '#45454c',

@@ -58,7 +58,7 @@ export type LiquidGlassPreset = {
 };
 export const LIQUID_GLASS_PRESETS: readonly LiquidGlassPreset[] = [
   { id: "frosted", strength: 0, blur: 12, bend: 0, needsDistortion: false },
-  { id: "clear", strength: 2.5, blur: 2.5, bend: 15, needsDistortion: true },
+  { id: "clear", strength: 2.5, blur: 1, bend: 15, needsDistortion: true },
   { id: "hazy", strength: 2.5, blur: 6, bend: 15, needsDistortion: true },
   { id: "eco", strength: 0, blur: 0, bend: 0, needsDistortion: false },
 ];

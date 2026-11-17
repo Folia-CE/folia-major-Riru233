@@ -11,7 +11,7 @@
     /* 面板宽（scratchpadPaper.ts 的 panelWidthFor 跟着它）。 */
     --scratchpad-width: min(368px, calc(100vw - 24px));
     --scratchpad-rail: #18181a;
-    --scratchpad-sheet: #232226;
+    --scratchpad-sheet: #23222666;
     --scratchpad-raise: #313134;
     --scratchpad-fresh: #38383c;
     --scratchpad-press: #3e3e42;
@@ -47,7 +47,7 @@
 
 .scratchpad-root.is-daylight {
     --scratchpad-rail: #dcdcdf;
-    --scratchpad-sheet: #ededef;
+    --scratchpad-sheet: #ededef66;
     --scratchpad-raise: #e2e2e5;
     --scratchpad-fresh: #d6d6da;
     --scratchpad-press: #d0d0d4;
@@ -236,21 +236,15 @@
    顶上 32px 是窗口标题栏的拖动区（AppShell，z 9999，盖在一切之上），所以面板里的东西从 40px 起。 */
 .scratchpad-drawer {
     position: fixed;
-    top: 60px;
+    top: 0;
     bottom: 0;
     left: 0;
-    margin: 20px;
     z-index: 95;
     display: flex;
     width: var(--scratchpad-width);
-    transition: width 0.26s cubic-bezier(0.22, 1, 0.36, 1);
-    flex-direction: column;
-    overflow: hidden;
-    border: 1px solid rgb(255 255 255 / 8%);
-    border-radius: 20px;
-    background: rgb(0 0 0 / 52%);
+    background: var(--scratchpad-sheet);
     box-shadow: 0 24px 64px rgb(0 0 0 / 42%);
-    backdrop-filter: blur(28px);
+    isolation: isolate;
     pointer-events: auto;
 }
 

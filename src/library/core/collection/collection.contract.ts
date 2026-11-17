@@ -1,4 +1,4 @@
-import type { LocalLibraryGroup } from '../../../types';
+import type { LocalLibraryGroup, SongResult } from '../../../types';
 import type {
     OnlineProviderId,
     ProviderArtistSummary,
@@ -11,7 +11,7 @@ import type {
 // 原先定义在 components/app/home/gridViewCollectionAdapters.ts，store 为了拿类型不得不反向依赖组件目录；
 // 放到 types 之后，组件、store、Library Core 都从这里取；R1 起随 Library Core 归到 core（原 src/types/libraryCollection.ts，现 core/collection/collection.contract.ts）。
 
-export type GridViewCollectionSource = 'online' | 'local' | 'navidrome';
+export type GridViewCollectionSource = 'online' | 'local' | 'navidrome' | 'welfare';
 
 /**
  * 根集合从哪里打开（导航栈的 origin）：首页卡片、搜索结果、播放器面板。返回到底时落回这里；
@@ -77,10 +77,23 @@ export interface OnlineGridViewCollectionDescriptor extends BaseGridViewCollecti
     raw?: any;
 }
 
+/**
+ * 福利集合（首页福利页签里的「版本典藏 / 限时福利」）。曲目是自带音频的那几首，已经在手里，
+ * 所以描述直接把整串曲目带上：宿主把它包成静态资源，既不会去问平台，也不会有加载态与分页。
+ * 描述由 app 层（library/app/welfareHome）从 services/welfareSongs 投影出来。
+ */
+export interface WelfareGridViewCollectionDescriptor extends BaseGridViewCollectionDescriptor {
+    source: 'welfare';
+    id: string;
+    type: 'playlist';
+    tracks: SongResult[];
+}
+
 export type GridViewCollectionDescriptor =
     | OnlineGridViewCollectionDescriptor
     | LocalGridViewCollectionDescriptor
-    | NavidromeGridViewCollectionDescriptor;
+    | NavidromeGridViewCollectionDescriptor
+    | WelfareGridViewCollectionDescriptor;
 
 /** 与渲染形态无关的名字；新代码用它，旧的 GridView* 名字保留作兼容。 */
 export type LibraryCollectionDescriptor = GridViewCollectionDescriptor;
@@ -97,4 +110,7 @@ export type CollectionNavigationSnapshot = {
 /** 判定集合身份需要的最少字段：在线集合必须带 provider。 */
 export type LibraryCollectionIdentity =
     | Pick<OnlineGridViewCollectionDescriptor, 'source' | 'providerId' | 'type' | 'id'>
-    | Pick<LocalGridViewCollectionDescriptor | NavidromeGridViewCollectionDescriptor, 'source' | 'type' | 'id'>;
+    | Pick<
+        LocalGridViewCollectionDescriptor | NavidromeGridViewCollectionDescriptor | WelfareGridViewCollectionDescriptor,
+        'source' | 'type' | 'id'
+    >;

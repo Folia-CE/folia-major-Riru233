@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Loader2, Settings, LayoutDashboard } from 'lucide-react';
+import { Search, Loader2, Settings, LayoutDashboard, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { resolveSearchSource, useSearchNavigationStore } from '../../../../stores/useSearchNavigationStore';
 import { useShallow } from 'zustand/react/shallow';
@@ -9,11 +9,15 @@ import LocalGrid3DView from './LocalGrid3DView';
 import NavidromeGrid3DView from './NavidromeGrid3DView';
 import { useGrid3DTabKeys } from './useGrid3DTabKeys';
 import DesktopGrid3DSurface from './DesktopGrid3DSurface';
+import WelfareChampionBanner from './WelfareChampionBanner';
+import { BLG_LOGO_URL } from './welfareChampionAssets';
 import OnlineProviderAccountlessPanel from '../account/OnlineProviderAccountlessPanel';
 import HomeLoginPanel from '../../../../components/login/HomeLoginPanel';
 import SwitcherPill from '../../../../components/login/SwitcherPill';
 import ExploreSurface from '../../../../components/app/home/explore/ExploreSurface';
 import { createOnlineGridViewCollection } from '../../../../components/app/home/gridViewCollectionAdapters';
+import { welfareCollectionOfCard, welfareGroupCards } from '../../../app/welfareHome';
+import { isWelfareCatalogAvailable } from '../../../../services/welfareSongs';
 import { hasExploreWallEntries } from '../../../../components/app/lattice/exploreWall';
 import type { ProviderCollection, ProviderUser } from '../../../../types/onlineMusic';
 import { useThemeSettingsStore } from '../../../../stores/useThemeSettingsStore';
@@ -32,7 +36,9 @@ import { useLibraryHomeActions } from '../../../core/home/useLibraryHomeActions'
 import { useLibraryHomeDirectory } from '../../../core/home/useLibraryHomeDirectory';
 import { useLibraryHomeListRegistration, useLibraryHomeTabsRegistration } from '../../../core/home/useLibraryHomeSurfaceRegistration';
 import { useGridMapVisibilityStore } from './gridMapVisibilityStore';
+import { useIsBottomLayoutCompact } from '../../../../stores/useBottomDockStore';
 import { cycleIndex, isOnlineHomeTab } from '../../../core/home/homeSources';
+import HomeSearchHistory, { HomeSearchHistoryPopover } from './HomeSearchHistory';
 import { useUpdateIndicator } from '../../../../hooks/useUpdateIndicator';
 import { useReducedMotionFor } from '../../../../hooks/useReducedMotionFor';
 import { useGlass } from '@/shinoinject/useGlass';
@@ -173,11 +179,17 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
         setSearchQuery,
         isSearching,
         submitSearch,
+        searchHistory,
+        forgetSearchHistoryQuery,
+        clearSearchHistory,
     } = useSearchNavigationStore(useShallow(state => ({
         searchQuery: state.searchQuery,
         setSearchQuery: state.setSearchQuery,
         isSearching: state.isSearching,
         submitSearch: state.submitSearch,
+        searchHistory: state.searchHistory,
+        forgetSearchHistoryQuery: state.forgetSearchHistoryQuery,
+        clearSearchHistory: state.clearSearchHistory,
     })));
 
     // 来源、页签与在线列表都来自 Library Core 的首页模型（core/home/homeSources、homeCards 与首页资源）；
@@ -188,6 +200,8 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
         playlists,
         cloudPlaylist,
         navidromeEnabled,
+        // 福利页签只在福利目录读得到时出现（assets/music 是闭源素材，这份构建里可能整个不在，见 services/welfareSongs）。
+        includeWelfare: isWelfareCatalogAvailable(),
     });
     const { tab: homeViewTab, setTab: setHomeViewTab, isOnlineTab, online, tabs: homeTabs } = homeSources;
     const activeProviderId = online.providerId;
@@ -217,6 +231,9 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
     }, [shownTabIndex]);
 
     const reduceMotion = useReducedMotionFor('uiMicroMotion');
+    // 紧凑档（窗口窄于 960，progress-bar v3，见 useBottomLayoutTracking）：页头的搜索框收成一颗搜索钮、
+    // 页签胶囊挪到整行中间。没挂档位追踪的页面（OBS 之类）一直是桌面档，页头照旧。
+    const isCompact = useIsBottomLayoutCompact();
 
     const onlineList = useLibraryHomeOnline(homeResources, { ...homeSources, tab: shownTab });
     const homeActions = homeResources.actions;
@@ -236,9 +253,30 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
     const [focusedIndex, setFocusedIndex] = useState(0);
     const gridRootRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
+    // 历史浮层要按锚点定位（它挂在 body 上，见 HomeSearchHistoryPopover）：桌面档与紧凑档各有一颗表单。
+    const searchFormRef = useRef<HTMLFormElement>(null);
+    const compactSearchFormRef = useRef<HTMLFormElement>(null);
     const [scanDetailsExpanded, setScanDetailsExpanded] = useState(false);
+    // 点开搜索框时贴在它下面的历史：数据是 useSearchNavigationStore 的 searchHistory，由 submitSearch 记。
+    const [isSearchHistoryOpen, setIsSearchHistoryOpen] = useState(false);
+    /** 紧凑档的搜索框是不是已经展开；桌面档一直是展开的，不看这个。 */
+    const [isCompactSearchOpen, setIsCompactSearchOpen] = useState(false);
 
     const showUpdateIndicator = useUpdateIndicator();
+
+    // 回到桌面档就收起：下次再进紧凑档，页头从收起的搜索钮开始，不会留着一个空展开的输入框。
+    useEffect(() => {
+        if (!isCompact) setIsCompactSearchOpen(false);
+    }, [isCompact]);
+
+    // 展开后把焦点直接交给输入框：点那一下就是来打字的，不用再点一次。
+    // 等一帧再聚焦：那一帧起搜索层才开始从右边滑进来。preventScroll 是必须的——搜索层此刻还在
+    // 页头右侧之外（translateX(100%)），浏览器默认会为了露出它把整个页面横向滚一段。
+    useEffect(() => {
+        if (!isCompact || !isCompactSearchOpen) return;
+        const frame = requestAnimationFrame(() => searchInputRef.current?.focus({ preventScroll: true }));
+        return () => cancelAnimationFrame(frame);
+    }, [isCompact, isCompactSearchOpen]);
 
     // Reset focused index when switching tabs.
     useEffect(() => {
@@ -253,6 +291,14 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
     // If Personal FM is clicked, it plays Personal FM directly instead of opening GridView.
     const handleSelectCollectionCard = (card: LibraryHomeCard) => {
         void homeActions.openOnlineCard(card, activeProviderId, collection => onOpenGridView?.(collection));
+    };
+
+    // 福利页签只有两张分组入口卡（永久 / 限时），点一张就是打开那一组的集合页——歌在 GridView 里看，
+    // 不在墙上铺（集合描述带着整串曲目，见 app/welfareHome）。卡片与在线页签同一套结构，直接走 DesktopGrid3DSurface。
+    const welfareGroupItems = useMemo<LibraryHomeCard[]>(() => welfareGroupCards(), []);
+    const handleSelectWelfareCard = (card: LibraryHomeCard) => {
+        const collection = welfareCollectionOfCard(card.id);
+        if (collection) onOpenGridView?.(collection);
     };
 
     // 首页模型交给 core 的首页 surface 句柄：页签条，以及在线页签的列表（本地与 Navidrome 由各自的视图注册）。
@@ -282,10 +328,18 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
         runAction: () => false,
     });
 
+    /** 紧凑档：把展开的搜索框收回圆钮，顺手把焦点还给页面，别停在一个已经看不见的输入框上。 */
+    const collapseCompactSearch = () => {
+        setIsCompactSearchOpen(false);
+        searchInputRef.current?.blur();
+    };
+
     // Search committed callback
-    const handleSearch = async (e?: React.FormEvent) => {
-        e?.preventDefault();
-        const query = searchQuery.trim();
+    // 提交一个词：搜索（submitSearch 顺带记进历史）、把首页让给结果页。
+    // 从历史标签点进来时直接带着那一条走，不必等 setSearchQuery 落进 state。
+    const runSearch = async (rawQuery: string) => {
+        const query = rawQuery.trim();
+        setIsSearchHistoryOpen(false);
         if (!query) return;
 
         const searchSource = isOnlineTab ? activeProviderId : resolveSearchSource(homeViewTab);
@@ -302,6 +356,11 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
         if (didSearch) {
             onSearchCommitted(query, searchSource);
         }
+    };
+
+    const handleSearch = (e?: React.FormEvent) => {
+        e?.preventDefault();
+        void runSearch(searchQuery);
     };
 
     const isSearchingActive = isSearching;
@@ -514,6 +573,34 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                 </div>
             );
         }
+        if (key === 'welfare') {
+            // 只有分组入口卡，所以没有加载态、没有空态：入口卡就是这一页的全部内容。
+            // 顶部横幅整幅 100% 宽，占自己的一行；下面的墙面照旧撑满剩余高度。
+            return (
+                <div className="w-full h-full flex-1 flex flex-col min-h-0 gap-3">
+                    <WelfareChampionBanner />
+                    <div className="flex-1 min-h-0">
+                        <DesktopGrid3DSurface
+                            focusMemoryScope="welfare"
+                            title={t('home.welfare')}
+                            mapButtonLabel={t('home.allAlbums')}
+                            items={welfareGroupItems}
+                            focusedIndex={focusedIndex}
+                            onFocusedIndexChange={setFocusedIndex}
+                            onSelect={item => handleSelectWelfareCard(item as LibraryHomeCard)}
+                            isLoading={false}
+                            theme={theme}
+                            isDaylight={isDaylight}
+                            isInteractive={interactive}
+                            hasFloatingPlayer={Boolean(currentTrack)}
+                            playlistVisibilityScope={scope}
+                            directoryKey={dirKey}
+                            declaredHomeActions={declaredActions}
+                        />
+                    </div>
+                </div>
+            );
+        }
         return (
             <div className="w-full h-full flex-1">
                 <NavidromeGrid3DView
@@ -552,6 +639,21 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
         // opacity 排前面：它按 300ms 淡，其余属性沿用这些元素原本 150ms 的过渡（例如搜索框展开宽度）。
         transition: 'opacity 300ms ease-in-out, all 150ms',
     };
+    /** 页头这几颗玻璃共用的一套底色、描边与文字色：搜索钮、桌面档的搜索框、紧凑档占满页头的搜索框。 */
+    const headerGlassStyle: React.CSSProperties = {
+        backgroundColor: isDaylight
+            ? "rgba(215,215,215,0.42)"
+            : "rgba(40, 40, 40, 0.42)",
+        borderTop: isDaylight
+            ? "1px solid #fff6"
+            : "1px solid #fff5",
+        borderBottom: isDaylight
+            ? "1px solid #fff6"
+            : "1px solid #fff5",
+        outline: "1px solid rgba(35,35,35,0.3)",
+        boxShadow: "0px 8px 16px rgba(40,40,40,0.2)",
+        color: isDaylight ? "#000" : "#fff",
+    };
 
     return (
         <div
@@ -566,7 +668,17 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                 inert={isGridMapOpen}
                 className={`z-[20] select-none ${isGridMapOpen ? 'pointer-events-none' : ''}`}
             >
-                <div className="grid grid-cols-2 md:grid-cols-2 items-center w-full py-4 md:py-10 md:px-4 gap-y-4 md:gap-y-0">
+            {/* 页头是道推拉门：紧凑档点开搜索时，整排按钮向左滑出，搜索框从右边滑进来占满整条页头；
+                收起时两边各自滑回。进出都只做 transform——不给祖先加 opacity 或 filter，那会把
+                backdrop-filter 的取样根截断在容器里，玻璃在动画期间就会消失；元素自己的 opacity 不参与
+                那个判定，所以页头因地图淡出仍按原来的逐个淡。这一层不裁切：扫库进度气泡是往下弹的，
+                要留它出去；滑出去的两层由页面自己的 overflow-hidden 收掉。 */}
+            <div className="relative">
+                <div
+                    className="transition-transform duration-300 ease-out"
+                    style={{ transform: isCompact && isCompactSearchOpen ? 'translateX(-100%)' : 'translateX(0)' }}
+                >
+                    <div className="relative grid grid-cols-2 items-center w-full py-10 px-4 gap-y-0">
                     {/* Left title and settings */}
                     <div className="flex items-center justify-start order-1 md:order-none gap-[10px]">
                         {/* 左侧按钮组 */}
@@ -581,13 +693,13 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                 ? "rgba(215,215,215,0.42)"
                                 : "rgba(40, 40, 40, 0.42)",
                                 borderTop: isDaylight
-                                ? "1px solid rgba(255,255,255,0.32)"
-                                : "1px solid rgba(255,255,255,0.22)",
+                                ? "1px solid #fff6"
+                                : "1px solid #fff5",
                                 borderBottom: isDaylight
-                                ? "1px solid rgba(255,255,255,0.32)"
-                                : "1px solid rgba(255,255,255,0.22)",
-                                outline: "1px solid rgba(40,40,40,0.2)",
-                                boxShadow: "2px 2px 8px 2px rgba(40,40,40,0.4)",
+                                ? "1px solid #fff6"
+                                : "1px solid #fff5",
+                                outline: "1px solid rgba(35,35,35,0.3)",
+                                boxShadow: "0px 8px 16px rgba(40,40,40,0.2)",
                                 ...headerFadeStyle,
                             }}
                             title={t('ui.options')}
@@ -614,13 +726,13 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                 ? "rgba(215,215,215,0.42)"
                                 : "rgba(40, 40, 40, 0.42)",
                             borderTop: isDaylight
-                                ? "1px solid rgba(255,255,255,0.32)"
-                                : "1px solid rgba(255,255,255,0.22)",
+                                ? "1px solid #fff6"
+                                : "1px solid #fff5",
                             borderBottom: isDaylight
-                                ? "1px solid rgba(255,255,255,0.32)"
-                                : "1px solid rgba(255,255,255,0.22)",
-                            outline: "1px solid rgba(40,40,40,0.2)",
-                            boxShadow: "2px 2px 8px 2px rgba(40,40,40,0.4)",
+                                ? "1px solid #fff6"
+                                : "1px solid #fff5",
+                            outline: "1px solid rgba(35,35,35,0.3)",
+                            boxShadow: "0px 8px 16px rgba(40,40,40,0.2)",
                             ...headerFadeStyle,
                             }}
                         >
@@ -692,7 +804,14 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                             </div>
                         )}
                         
-                        <div className="relative scale-90 md:scale-100 mt-[5px] ml-[10px] origin-center rounded-full -inset-1" style={{ overflow: 'visible' }}>
+                        <div
+                            // 紧凑档里页签胶囊脱离左边那一组、居到整条页头中间（左右两组按钮仍各贴一边）：
+                            // 按自身宽度居中，换页签、加页签时都不会偏。尺寸与桌面档一致（不做 scale-90 的缩小）。
+                            className={`origin-center rounded-full ${isCompact
+                                ? 'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2'
+                                : 'relative scale-90 md:scale-100 mt-[5px] ml-[10px] -inset-1'}`}
+                            style={{ overflow: 'visible' }}
+                        >
                             {/* 玻璃底色单独做绝对定位层，与摇杆、页签同为兄弟层级：摇杆不再嵌在玻璃元素里，
                                 否则它自己的流体玻璃 backdrop 只能采到父级已经模糊过的背景，被削弱。 */}
                             <div
@@ -702,10 +821,10 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                 className="absolute -inset-1 rounded-full"
                                 style={{
                                     backgroundColor: isDaylight ? 'rgba(215,215,215,0.42)' : 'rgba(40, 40, 40, 0.42)',
-                                    borderTop: isDaylight ? '1px solid rgba(255,255,255,0.32)' : '1px solid rgba(255,255,255,0.22)',
-                                    borderBottom: isDaylight ? '1px solid rgba(255,255,255,0.32)' : '1px solid rgba(255,255,255,0.22)',
-                                    outline: '1px solid rgba(40,40,40,0.2)',
-                                    boxShadow: '2px 2px 8px 2px rgba(40,40,40,0.4)',
+                                    borderTop: isDaylight ? '1px solid #fff6' : '1px solid #fff5',
+                                    borderBottom: isDaylight ? '1px solid #fff6' : '1px solid #fff5',
+                                    outline: '1px solid rgba(35,35,35,0.3)',
+                                    boxShadow: '0px 8px 16px rgba(40,40,40,0.2)',
                                     ...headerFadeStyle,
                                 }}
                             />
@@ -747,8 +866,8 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                         values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"
                                         result="dispB"
                                     />
-                                    <feOffset in="dispR" dx="-2.4" dy="-2.4" result="dispRShift" />
-                                    <feOffset in="dispB" dx="2.4" dy="2.4" result="dispBShift" />
+                                    <feOffset in="dispR" dx="-2.6" dy="-2.6" result="dispRShift" />
+                                    <feOffset in="dispB" dx="2.6" dy="2.6" result="dispBShift" />
                                     {/* 三通道必须用 screen 相加，不能用 feMerge：feMerge 是「盖上去」，
                                         每个通道都是不透明的，后画的会把先画的整个盖掉，最后只剩蓝色一层。
                                         screen 在两个不透明图层上就是逐通道相加（交叠项为 0），
@@ -761,7 +880,7 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                 pointer-events-none 让按下穿透到下面的页签轨道，不挡拖动与点击。 */}
                             <motion.div
                                 aria-hidden="true"
-                                className={`absolute z-10 rounded-full shadow-sm pointer-events-none transition-[background-color,box-shadow] duration-200 ease-out outline outline-1 outline-[rgba(40,40,40,0.2)] ${thumbDragging ? 'bg-transparent z-888 shadow-[2px_2px_8px_2px_rgba(40,40,40,0.4)]' : 'bg-[var(--text-accent)]/40 shadow-[2px_2px_8px_2px_rgba(40,40,40,0.4)]'}`}
+                                className={`absolute z-10 rounded-full shadow-sm pointer-events-none transition-[background-color,box-shadow] duration-200 ease-out outline outline-1 outline-[rgba(35,35,35,0.3)] ${thumbDragging ? 'bg-transparent z-888 shadow-[0px_8px_16px_rgba(40,40,40,0.2)]' : 'bg-[var(--text-accent)]/40 shadow-[0px_8px_16px_rgba(40,40,40,0.2)]'}`}
                                 style={{
                                     // 摇杆的放大与速度形变全部用 width / height 表达、锚点是中心（useHomeTabThumb
                                     // 里补偿好的 left / top），不再用 transform: scale：这样圆角、边框、玻璃
@@ -771,11 +890,11 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                     width: thumbBoxWidth,
                                     height: thumbBoxHeight,
                                     borderTop: isDaylight
-                                        ? "1px solid rgba(255,255,255,0.32)"
-                                        : "1px solid rgba(255,255,255,0.22)",
+                                        ? "1px solid #fff6"
+                                        : "1px solid #fff5",
                                     borderBottom: isDaylight
-                                        ? "1px solid rgba(255,255,255,0.32)"
-                                        : "1px solid rgba(255,255,255,0.22)",
+                                        ? "1px solid #fff6"
+                                        : "1px solid #fff5",
                                     pointerEvents: 'none',
                                     // 按住摇杆（拖动中）时去掉底色，只留摇杆自身的流体玻璃；底色与阴影的进出
                                     // 由上面的 transition 补间，松手复原时不再瞬间跳变。
@@ -872,16 +991,27 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                                     setHomeViewTab(tab.key);
                                                     focusActiveSlider();
                                                 }}
-                                                className={`relative inline-flex items-center justify-center px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition-colors duration-300 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-35 ${isActive ? activeTabBg : navPillInactiveText}`}
+                                                className={`relative inline-flex items-center justify-center px-4 py-1.5 rounded-full font-medium transition-colors duration-300 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-35 ${isCompact ? 'text-sm' : 'text-xs md:text-sm'} ${isActive ? activeTabBg : navPillInactiveText}`}
                                             >
-                                                <span className="relative z-20">{tab.label}</span>
+                                                {/* 福利页签不写字，用 BLG 队标：宽度锁在两个字符（2em，跟着这一排的字号走），
+                                                    这样它的胶囊宽度和旁边的「专辑」「本地」对齐，切页签时那一排不跳。 */}
+                                                <span className="relative z-20">
+                                                    {tab.key === 'welfare' ? (
+                                                        <img
+                                                            src={BLG_LOGO_URL}
+                                                            alt=""
+                                                            draggable={false}
+                                                            className="block h-4 w-[2em] select-none object-contain"
+                                                        />
+                                                    ) : tab.label}
+                                                </span>
                                             </button>
                                         </span>
                                     );
                                 })}
                                 {props.extraTabs?.map(tab => (
                                     <button key={tab.id} type="button" onClick={tab.select}
-                                        className={`relative inline-flex items-center justify-center px-4 py-1.5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap ${navPillInactiveText}`}>
+                                        className={`relative inline-flex items-center justify-center px-4 py-1.5 rounded-full font-medium whitespace-nowrap ${isCompact ? 'text-sm' : 'text-xs md:text-sm'} ${navPillInactiveText}`}>
                                         {tab.label}
                                     </button>
                                 ))}
@@ -889,7 +1019,7 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                     <button
                                         onClick={() => onOpenStagePlayer?.()}
                                         data-stage-active={stageIsActive ? 'true' : 'false'}
-                                        className={`relative inline-flex items-center justify-center px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition-colors duration-300 whitespace-nowrap ${navPillInactiveText}`}
+                                        className={`relative inline-flex items-center justify-center px-4 py-1.5 rounded-full font-medium transition-colors duration-300 whitespace-nowrap ${isCompact ? 'text-sm' : 'text-xs md:text-sm'} ${navPillInactiveText}`}
                                     >
                                         <span className="relative z-10">{t('home.stage')}</span>
                                     </button>
@@ -913,36 +1043,121 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
 
                     {/* Right Search Bar（左边紧挨着平台切换与返回歌词画报两颗圆钮） */}
                     <div className="flex items-center justify-end gap-3 order-2 md:order-none">
-                        {/* 窄屏这一行放不下两颗圆钮（左边的页签胶囊会顶过来），那里仍用右脚那颗浮层，见文件末尾。 */}
-                        <div className="hidden md:flex">
+                        {/* 平台切换（没人登录时就是登录入口）所有宽度都在页头里，窄屏也不再退到右下角的浮层：
+                            紧凑档页签胶囊已经居中、不再往这边顶，这一行放得下。 */}
+                        <div className="flex shrink-0">
                             <SwitcherPill
                                 variant="header"
                                 account={account}
                                 surfaceStyle={headerFadeStyle}
                             />
                         </div>
-                        <form
-                        onSubmit={handleSearch}
-                        className="relative w-full md:w-56 transition-all focus-within:md:w-72  rounded-full"
-                        data-glass
-                        data-glass-jelly
-                        data-glass-light
+                        {isCompact ? (
+                            // 紧凑档收着的时候这里只有一颗圆钮：点开之后整条页头交给搜索层（见下面），
+                            // 页头这一排按钮一起向左滑出去。
+                            <button
+                                type="button"
+                                onClick={() => setIsCompactSearchOpen(true)}
+                                title={t('home.searchButton')}
+                                aria-label={t('home.searchButton')}
+                                aria-expanded={isCompactSearchOpen}
+                                data-testid="home-search-toggle"
+                                data-glass
+                                data-glass-jelly
+                                data-glass-light
+                                className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full"
+                                style={{ ...headerGlassStyle, ...headerFadeStyle }}
+                            >
+                                {isSearchingActive
+                                    ? <Loader2 className="h-4 w-4 animate-spin opacity-40" />
+                                    : <Search className="h-4 w-4 opacity-40 transition-opacity hover:opacity-100" />}
+                            </button>
+                        ) : (
+                            <form
+                                ref={searchFormRef}
+                                onSubmit={handleSearch}
+                                className="relative w-full rounded-full transition-all md:w-56 focus-within:md:w-72"
+                                data-glass
+                                data-glass-jelly
+                                data-glass-light
+                                style={{ ...headerGlassStyle, ...headerFadeStyle }}
+                                onBlur={event => {
+                                    // 焦点离开整块（连历史面板一起）才收起，点到面板里的标签不算离开。
+                                    if (!event.currentTarget.contains(event.relatedTarget)) {
+                                        setIsSearchHistoryOpen(false);
+                                    }
+                                }}
+                            >
+                                {isSearchingActive ? (
+                                    <Loader2 className="absolute left-3 top-1/2 w-4 h-4 animate-spin opacity-40 -mt-2" />
+                                ) : (
+                                    <Search
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40 w-4 h-4 cursor-pointer hover:opacity-100 transition-opacity"
+                                        onClick={() => handleSearch()}
+                                    />
+                                )}
+                                <input
+                                    ref={searchInputRef}
+                                    type="text"
+                                    placeholder={homeViewTab === 'local' ? t('home.searchLocal') : homeViewTab === 'navidrome' ? t('home.searchNavidrome') : t('home.searchDatabase')}
+                                    value={searchQuery}
+                                    onChange={e => setSearchQuery(e.target.value)}
+                                    onFocus={() => setIsSearchHistoryOpen(true)}
+                                    onKeyDown={event => {
+                                        if (event.key === 'Escape' && isSearchHistoryOpen) {
+                                            event.stopPropagation();
+                                            setIsSearchHistoryOpen(false);
+                                        }
+                                    }}
+                                    aria-expanded={isSearchHistoryOpen && searchHistory.length > 0}
+                                    aria-controls="home-search-history"
+                                    className="w-full border border-white/10 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all placeholder:text-current placeholder:opacity-40 select-text placeholder:italic"
+                                    style={{ color: 'var(--text-primary)' }}
+                                />
+                                {/* 历史面板挂在 body 上（HomeSearchHistoryPopover）：搜索框自己带
+                                    backdrop-filter，面板做它的后代时玻璃取样根被截断，滤镜会整个失效。 */}
+                                <HomeSearchHistoryPopover
+                                    open={isSearchHistoryOpen && searchHistory.length > 0}
+                                    anchorRef={searchFormRef}
+                                    align="end"
+                                >
+                                    <HomeSearchHistory
+                                        items={searchHistory}
+                                        onPick={item => {
+                                            setSearchQuery(item);
+                                            void runSearch(item);
+                                        }}
+                                        onRemove={forgetSearchHistoryQuery}
+                                        onClear={clearSearchHistory}
+                                        isDaylight={isDaylight}
+                                    />
+                                </HomeSearchHistoryPopover>
+                            </form>
+                        )}
+                    </div>
+                    </div>
+                </div>
+
+                {/* 紧凑档展开的搜索：从右边滑进来占满整条页头（左右 padding 与页头一致，所以贴齐两侧）。
+                    收起时滑回右边、同时断掉指针与焦点；输入框里的字留着，下次展开接着改。 */}
+                {isCompact && (
+                    <div
+                        className="absolute inset-0 flex items-center px-4 transition-transform duration-300 ease-out"
                         style={{
-                            backgroundColor: isDaylight
-                            ? "rgba(215,215,215,0.42)"
-                            : "rgba(40, 40, 40, 0.42)",
-                            borderTop: isDaylight
-                            ? "1px solid rgba(255,255,255,0.32)"
-                            : "1px solid rgba(255,255,255,0.22)",
-                            borderBottom: isDaylight
-                            ? "1px solid rgba(255,255,255,0.32)"
-                            : "1px solid rgba(255,255,255,0.22)",
-                            outline: "1px solid rgba(40,40,40,0.2)",
-                            boxShadow: "2px 2px 8px 2px rgba(40,40,40,0.4)",
-                            color: isDaylight ? "#000" : "#fff",
-                            overflow: "auto",
-                            ...headerFadeStyle,
+                            transform: isCompactSearchOpen ? 'translateX(0)' : 'translateX(100%)',
+                            pointerEvents: isCompactSearchOpen ? 'auto' : 'none',
                         }}
+                        aria-hidden={!isCompactSearchOpen}
+                        inert={!isCompactSearchOpen}
+                    >
+                        <form
+                            ref={compactSearchFormRef}
+                            onSubmit={handleSearch}
+                            className="relative h-10 w-full rounded-full"
+                            data-glass
+                            data-glass-jelly
+                            data-glass-light
+                            style={{ ...headerGlassStyle, ...headerFadeStyle }}
                         >
                             {isSearchingActive ? (
                                 <Loader2 className="absolute left-3 top-1/2 w-4 h-4 animate-spin opacity-40 -mt-2" />
@@ -958,12 +1173,57 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                                 placeholder={homeViewTab === 'local' ? t('home.searchLocal') : homeViewTab === 'navidrome' ? t('home.searchNavidrome') : t('home.searchDatabase')}
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
-                                className={`w-full border border-white/10 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all placeholder:text-current placeholder:opacity-40 select-text placeholder:italic`}
+                                onKeyDown={e => {
+                                    // Esc 先收搜索历史；历史没开时才收起整条搜索层。输入框里的字留着（下次展开接着改）。
+                                    if (e.key !== 'Escape') return;
+                                    e.preventDefault();
+                                    if (isSearchHistoryOpen) {
+                                        setIsSearchHistoryOpen(false);
+                                        return;
+                                    }
+                                    collapseCompactSearch();
+                                }}
+                                onFocus={() => setIsSearchHistoryOpen(true)}
+                                onBlur={e => {
+                                    // 没打字就离开这一块，自动收回圆钮；指针挪到同一块里的那几颗图标上不算离开。
+                                    if (searchQuery.trim()) return;
+                                    const next = e.relatedTarget;
+                                    if (next instanceof Node && e.currentTarget.parentElement?.contains(next)) return;
+                                    setIsCompactSearchOpen(false);
+                                }}
+                                className="h-10 w-full rounded-full border border-white/10 py-2 pl-10 pr-10 text-sm placeholder:italic placeholder:text-current placeholder:opacity-40 focus:border-white/20 focus:outline-none select-text"
                                 style={{ color: 'var(--text-primary)' }}
                             />
+                            {/* 收起：打完字（或改到一半）不想搜了就按这个，输入框跟着滑回右边。 */}
+                            <button
+                                type="button"
+                                onClick={collapseCompactSearch}
+                                title={t('home.searchClose')}
+                                aria-label={t('home.searchClose')}
+                                className="absolute right-1.5 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full transition-colors hover:bg-white/15"
+                            >
+                                <X className="h-3.5 w-3.5 opacity-50" />
+                            </button>
+                            <HomeSearchHistoryPopover
+                                open={isSearchHistoryOpen && searchHistory.length > 0}
+                                anchorRef={compactSearchFormRef}
+                                align="stretch"
+                            >
+                                <HomeSearchHistory
+                                    items={searchHistory}
+                                    onPick={item => {
+                                        setSearchQuery(item);
+                                        void runSearch(item);
+                                    }}
+                                    onRemove={forgetSearchHistoryQuery}
+                                    onClear={clearSearchHistory}
+                                    isDaylight={isDaylight}
+                                />
+                            </HomeSearchHistoryPopover>
                         </form>
                     </div>
-                </div>
+                )}
+            </div>
             </div>
 
             {/* Desktop Canvas Surface。每个访问过的页签常驻一层（keep-alive）：切页签只切换可见性和横向位移，
@@ -1002,11 +1262,8 @@ export const Grid3D: React.FC<Grid3DProps> = (props) => {
                 })}
             </div>
 
-            {/* 窄屏的平台切换：还是原来右脚那颗浮层（md 起挪进页头，见上面的搜索栏）。
-                返回歌词画报的箭头在播放条上，这里不再有它。 */}
-            <div className="md:hidden">
-                <SwitcherPill account={account} />
-            </div>
+            {/* 窄屏原本在这里挂一颗浮层版的平台切换，现在已经统一挪进页头（见上面的搜索栏那一行），
+                所以不再保留第二颗。返回歌词画报的箭头在播放条上，这里从来没有它。 */}
 
         </div>
     );

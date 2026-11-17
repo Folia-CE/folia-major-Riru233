@@ -11,9 +11,11 @@ import { setBravaisSearchOpen } from './bravaisHomeUiStore';
 import { useBravaisHomeChrome } from './useBravaisHomeChrome';
 import { BravaisHomeLocal, BravaisHomeNavidrome, BravaisHomeOnline } from './BravaisHomeSources';
 import BravaisHomeExplore from './BravaisHomeExplore';
+import BravaisHomeWelfare from './BravaisHomeWelfare';
+import { isWelfareCatalogAvailable } from '../../../services/welfareSongs';
 
 // src/library/suites/bravais/BravaisHome.tsx
-// 首页 surface（B9，设计稿 §10.5）：六个页签（歌单 / 电台 / 专辑 / 探索 / 本地 / Navidrome）都铺墙；探索按网格探索拼贴的
+// 首页 surface（B9，设计稿 §10.5）：七个页签（歌单 / 电台 / 专辑 / 探索 / 本地 / Navidrome / 福利）都铺墙；探索按网格探索拼贴的
 // 排法铺（BravaisHomeExplore）。与 TUI、网格用同一套首页
 // 绑定（来源与页签、在线列表、首页资源与动作都来自 core，换 suite 不重新请求），按当前来源挂一个来源组件
 // （BravaisHomeSources），它把当前页签 / section 的卡片投影成首页层推进 stage store；这里自己只渲染一个不可见的锚点。
@@ -35,7 +37,15 @@ const BravaisHome: React.FC<LibraryHomeSurfaceProps> = (props) => {
         isInteractive,
         declaredActions,
     } = props;
-    const sources = useLibraryHomeSources({ account, user, playlists, cloudPlaylist, navidromeEnabled });
+    // 福利页签只在福利目录读得到时出现（assets/music 是闭源素材，这份构建里可能整个不在）。
+    const sources = useLibraryHomeSources({
+        account,
+        user,
+        playlists,
+        cloudPlaylist,
+        navidromeEnabled,
+        includeWelfare: isWelfareCatalogAvailable(),
+    });
     const { tab, setTab, tabs, online } = sources;
     const onlineList = useLibraryHomeOnline(homeResources, sources);
     const { scanPercent, snapshot: actionState } = useLibraryHomeActions(homeResources.actions);
@@ -108,6 +118,16 @@ const BravaisHome: React.FC<LibraryHomeSurfaceProps> = (props) => {
                     setActiveRow={row => setLocalMusicState(previous => ({ ...previous, activeRow: row }))}
                     treesResource={homeResources.localDirectoryTrees}
                     directoryActions={directoryActions}
+                />
+            ) : tab === 'welfare' ? (
+                <BravaisHomeWelfare
+                    chrome={chrome}
+                    directoryKey={directoryKey}
+                    hiddenScope={hiddenScope}
+                    declaredActions={declaredActions}
+                    isInteractive={isInteractive}
+                    label={tabLabel('welfare')}
+                    onOpenCollection={collection => onOpenGridView?.(collection)}
                 />
             ) : (
                 <BravaisHomeNavidrome {...common} meta={tabLabel('navidrome')} overview={homeResources.navidromeOverview} />

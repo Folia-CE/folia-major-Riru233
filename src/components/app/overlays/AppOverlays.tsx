@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import FloatingPlayerControls from '../../FloatingPlayerControls';
 import DockedPlayerBar from '../../docked-player/DockedPlayerBar';
 import SearchWorkspace from '../search/SearchWorkspace';
@@ -12,6 +12,7 @@ import { useLatticeControlsStore } from '../../../stores/useLatticeControlsStore
 import { useBottomDockStore } from '../../../stores/useBottomDockStore';
 import { useBottomLayoutTracking } from '../../../hooks/useBottomLayoutTracking';
 import { useNowPlayingCardLayoutStore } from './now-playing-toast/nowPlayingCardLayoutStore';
+import { useTrackEndCountdownStore, withTrackEndCountdown } from './now-playing-toast/trackEndCountdownStore';
 import { useTransitionBorderCue } from './now-playing-toast/useTransitionBorderCue';
 import { usePlayerChromeSettingsStore } from '../../../stores/usePlayerChromeSettingsStore';
 import OffsetTuningBar from './OffsetTuningBar';
@@ -36,9 +37,22 @@ const AppOverlays: React.FC<AppOverlaysProps> = ({ model }) => {
         searchOverlay,
         debugOverlay,
         memoryMonitor,
-        floatingControls,
-        nowPlayingToast,
+        floatingControls: rawFloatingControls,
+        nowPlayingToast: rawNowPlayingToast,
     } = model;
+
+    // 模型里的 isNextUp 只算混音。普通曲末的倒计时每首歌翻两次，放在 App 里每翻一次整棵重渲染一遍，
+    // 所以在这里读，合进卡片和胶囊拿到的 props；没在倒计时就原样传下去。
+    const isTrackEndCountdownActive = useTrackEndCountdownStore(state => state.active);
+    const nowPlayingToast = useMemo(
+        () => withTrackEndCountdown(rawNowPlayingToast, isTrackEndCountdownActive),
+        [rawNowPlayingToast, isTrackEndCountdownActive],
+    );
+    const floatingControls = useMemo(() => {
+        const controls = rawFloatingControls;
+        const card = withTrackEndCountdown(controls?.card, isTrackEndCountdownActive);
+        return controls && card !== controls.card ? { ...controls, card } : controls;
+    }, [rawFloatingControls, isTrackEndCountdownActive]);
 
     // 「在画面中调整」音画偏移：设置里的按钮打开它，并把人送到歌词画报上，悬浮窗常驻在播放条上方。
     const isOffsetTuningOpen = useOffsetTuningStore(state => state.isOpen);
@@ -96,6 +110,8 @@ const AppOverlays: React.FC<AppOverlaysProps> = ({ model }) => {
                     showReturnToPlayer={floatingControls.currentView !== 'player'}
                     onReturnToPlayer={floatingControls.onNavigateToPlayer}
                     isPlayerView={floatingControls.currentView === 'player'}
+                    onOpenLattice={model.dockedBar.onOpenLattice}
+                    onOpenArtist={model.dockedBar.onOpenArtist}
                 />
             )}
 

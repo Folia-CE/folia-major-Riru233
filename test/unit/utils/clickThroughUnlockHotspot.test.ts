@@ -10,6 +10,9 @@ import {
     CLICK_THROUGH_UNLOCK_BUTTON_RIGHT_OFFSET_WITH_FULLSCREEN_BUTTON,
     CLICK_THROUGH_UNLOCK_BUTTON_WIDTH,
     CLICK_THROUGH_MEDIA_CONTROLS_GAP,
+    CLICK_THROUGH_PIN_BUTTON_RIGHT_OFFSET,
+    CLICK_THROUGH_PIN_BUTTON_RIGHT_OFFSET_WITH_FULLSCREEN_BUTTON,
+    CLICK_THROUGH_PIN_BUTTON_WIDTH,
     CLICK_THROUGH_UNLOCK_BUTTON_GAP,
     CLICK_THROUGH_UNLOCK_BUTTON_SHIFT,
     CLICK_THROUGH_UNLOCK_HOTSPOT,
@@ -30,8 +33,8 @@ const BUTTON_CENTER_Y = 16;
 
 describe('click-through unlock hotspot', () => {
     it('mirrors the hotspot for left-side window buttons without enabling the opposite edge', () => {
-        // Mirrored AppShell offsets: the lock at left-[210px]/left-[254px], the media group at
-        // left-[244px]/left-[288px], each as wide as on the right.
+        // Mirrored AppShell offsets: the lock at left-[180px]/left-[224px], the pin at
+        // left-[214px]/left-[258px], the media group at left-[248px]/left-[292px], each as wide as on the right.
         const lockRight = CLICK_THROUGH_UNLOCK_BUTTON_RIGHT_OFFSET_WITH_FULLSCREEN_BUTTON + CLICK_THROUGH_UNLOCK_BUTTON_WIDTH;
         const mediaRight = CLICK_THROUGH_MEDIA_CONTROLS_RIGHT_OFFSET_WITH_FULLSCREEN_BUTTON + CLICK_THROUGH_MEDIA_CONTROLS_WIDTH;
         for (let x = CLICK_THROUGH_UNLOCK_BUTTON_RIGHT_OFFSET; x <= Math.max(lockRight, mediaRight); x += 1) {
@@ -54,6 +57,20 @@ describe('click-through unlock hotspot', () => {
     });
 
     it.each([
+        ['without the fullscreen button', CLICK_THROUGH_PIN_BUTTON_RIGHT_OFFSET, CLICK_THROUGH_UNLOCK_BUTTON_RIGHT_OFFSET],
+        ['with the fullscreen button', CLICK_THROUGH_PIN_BUTTON_RIGHT_OFFSET_WITH_FULLSCREEN_BUTTON, CLICK_THROUGH_UNLOCK_BUTTON_RIGHT_OFFSET_WITH_FULLSCREEN_BUTTON],
+    ])('covers the keep-on-top button and the gap to the unlock button %s', (_label, rightOffset, unlockRightOffset) => {
+        const pinRight = VIEWPORT_WIDTH - rightOffset;
+        const pinLeft = pinRight - CLICK_THROUGH_PIN_BUTTON_WIDTH;
+        const unlockRight = VIEWPORT_WIDTH - unlockRightOffset;
+
+        expect(pinRight).toBeLessThan(unlockRight - CLICK_THROUGH_UNLOCK_BUTTON_WIDTH);
+        for (let x = pinLeft; x <= unlockRight; x += 1) {
+            expect(isWithinClickThroughUnlockHotspot(x, BUTTON_CENTER_Y, VIEWPORT_WIDTH)).toBe(true);
+        }
+    });
+
+    it.each([
         ['without the fullscreen button', CLICK_THROUGH_MEDIA_CONTROLS_RIGHT_OFFSET, CLICK_THROUGH_UNLOCK_BUTTON_RIGHT_OFFSET],
         ['with the fullscreen button', CLICK_THROUGH_MEDIA_CONTROLS_RIGHT_OFFSET_WITH_FULLSCREEN_BUTTON, CLICK_THROUGH_UNLOCK_BUTTON_RIGHT_OFFSET_WITH_FULLSCREEN_BUTTON],
     ])('covers the media buttons and the gap to the unlock button %s (#471)', (_label, rightOffset, unlockRightOffset) => {
@@ -71,17 +88,15 @@ describe('click-through unlock hotspot', () => {
     });
 
     it('keeps the plain layout at the offsets the hotspot was sized for', () => {
-        const extent = (hasFullscreenButton: boolean) => resolveWindowControlsExtent({ hasFullscreenButton, nativeTrafficLights: false, side: 'right' });
         const inset = (hasFullscreenButton: boolean) => resolveUnlockButtonInset({ hasFullscreenButton, nativeTrafficLights: false, side: 'right' });
-        // 4px gap plus the 30px the lock is nudged inwards from the window buttons.
-        expect(extent(false) + CLICK_THROUGH_UNLOCK_BUTTON_GAP + CLICK_THROUGH_UNLOCK_BUTTON_SHIFT).toBe(CLICK_THROUGH_UNLOCK_BUTTON_RIGHT_OFFSET);
-        expect(extent(true) + CLICK_THROUGH_UNLOCK_BUTTON_GAP + CLICK_THROUGH_UNLOCK_BUTTON_SHIFT).toBe(CLICK_THROUGH_UNLOCK_BUTTON_RIGHT_OFFSET_WITH_FULLSCREEN_BUTTON);
         expect(inset(false)).toBe(CLICK_THROUGH_UNLOCK_BUTTON_RIGHT_OFFSET);
         expect(inset(true)).toBe(CLICK_THROUGH_UNLOCK_BUTTON_RIGHT_OFFSET_WITH_FULLSCREEN_BUTTON);
-        expect(inset(false) + CLICK_THROUGH_UNLOCK_BUTTON_WIDTH + CLICK_THROUGH_MEDIA_CONTROLS_GAP).toBe(CLICK_THROUGH_MEDIA_CONTROLS_RIGHT_OFFSET);
+        const pinOffset = inset(false) + CLICK_THROUGH_UNLOCK_BUTTON_WIDTH + CLICK_THROUGH_MEDIA_CONTROLS_GAP;
+        expect(pinOffset).toBe(CLICK_THROUGH_PIN_BUTTON_RIGHT_OFFSET);
+        expect(pinOffset + CLICK_THROUGH_PIN_BUTTON_WIDTH + CLICK_THROUGH_MEDIA_CONTROLS_GAP).toBe(CLICK_THROUGH_MEDIA_CONTROLS_RIGHT_OFFSET);
     });
 
-    // The main process polls the cursor on macOS. Wherever AppShell puts the lock and the media
+    // The main process polls the cursor on macOS. Wherever AppShell puts the lock, the pin and the media
     // buttons, the rectangle it polls has to cover them, or the lock shows up beside the hotspot
     // and hides again when the cursor moves onto it.
     it.each(
@@ -89,7 +104,8 @@ describe('click-through unlock hotspot', () => {
     )('covers the lock and the media buttons in the main process: %o', ({ nativeTrafficLights, side, hasFullscreenButton }) => {
         const hotspot = resolveUnlockHotspot(CLICK_THROUGH_UNLOCK_HOTSPOT, { nativeTrafficLights, side });
         const lockStart = resolveUnlockButtonInset({ hasFullscreenButton, nativeTrafficLights, side });
-        const mediaEnd = lockStart + CLICK_THROUGH_UNLOCK_BUTTON_WIDTH + CLICK_THROUGH_MEDIA_CONTROLS_GAP + CLICK_THROUGH_MEDIA_CONTROLS_WIDTH;
+        const mediaEnd = lockStart + CLICK_THROUGH_UNLOCK_BUTTON_WIDTH + CLICK_THROUGH_MEDIA_CONTROLS_GAP
+            + CLICK_THROUGH_PIN_BUTTON_WIDTH + CLICK_THROUGH_MEDIA_CONTROLS_GAP + CLICK_THROUGH_MEDIA_CONTROLS_WIDTH;
         const inside = (fromEdge: number) => isCursorInsideUnlockHotspot({
             bounds: { x: 0, y: 0, width: VIEWPORT_WIDTH },
             cursor: { x: side === 'left' ? fromEdge : VIEWPORT_WIDTH - fromEdge, y: BUTTON_CENTER_Y },

@@ -196,12 +196,12 @@ export const LocalGrid3DView: React.FC<LocalGrid3DViewProps> = ({
                     style={{
                         background: "linear-gradient(to bottom,#9dafd722,#19309566,#48cbfa77)",
                         borderTop: isDaylight
-                            ? "1px solid rgba(255,255,255,0.32)"
-                            : "1px solid rgba(255,255,255,0.22)",
+                            ? "1px solid #fff6"
+                            : "1px solid #fff5",
                         borderBottom: isDaylight
-                            ? "1px solid rgba(255,255,255,0.32)"
-                            : "1px solid rgba(255,255,255,0.22)",
-                        outline: "1px solid rgba(40,40,40,0.2)",
+                            ? "1px solid #fff6"
+                            : "1px solid #fff5",
+                        outline: "1px solid rgba(35,35,35,0.3)",
                         color: '#fffa',
                     }}
                     onClick={() => void homeActions.importFolder()}

@@ -1,6 +1,7 @@
 import type React from 'react';
 import type { SettingsOptionDef } from '../kit';
 import type { SettingsSectionId } from '../navigation/settingsNavModel';
+import * as ai from './AiServicePage';
 import * as appearance from './AppearancePage';
 import * as desktop from './DesktopPage';
 import * as developer from './DeveloperPage';
@@ -14,6 +15,7 @@ import * as lyrics from './LyricsPage';
 import * as mods from './ModsPage';
 import * as playback from './PlaybackPage';
 import * as player from './PlayerPage';
+import * as remote from './RemotePage';
 import * as storage from './StoragePage';
 
 // src/components/modal/settings/pages/index.ts
@@ -25,6 +27,7 @@ type PageModule = { default: React.FC; OPTIONS: readonly SettingsOptionDef[] };
 /** Each category's page file. Its component and its options are read from the one file, so the two cannot be paired wrongly. */
 const PAGE_MODULES: Record<SettingsSectionId, PageModule> = {
     appearance,
+    ai,
     player,
     home,
     playback,
@@ -34,6 +37,7 @@ const PAGE_MODULES: Record<SettingsSectionId, PageModule> = {
     integration,
     storage,
     desktop,
+    remote,
     graphics,
     lab,
     mods,

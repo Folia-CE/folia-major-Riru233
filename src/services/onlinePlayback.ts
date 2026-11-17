@@ -19,6 +19,7 @@ import { isCachedSongAudioDistrusted } from './playbackRecovery/mediaCacheGuard'
 import { toPlayableAudioUrl } from '../utils/appPlaybackHelpers';
 import { getOnlineProviderIdForSong } from '../utils/appPlaybackGuards';
 import { getProviderSongMetadata } from './onlineMusic/songMetadata';
+import { bundledSongAudioUrl, loadBundledSongAudio } from './bundledSongAudio';
 import { useLyricSettingsStore } from '../stores/useLyricSettingsStore';
 import { useOnlineProviderAccountStore } from '../stores/useOnlineProviderAccountStore';
 import { saveLyricCacheSongMetadata } from './lyricExport/lyricCacheMetadata';
@@ -60,6 +61,15 @@ export async function loadOnlineSongAudioSource(
     // over for a URL of the level asked for: the option decides what plays, cached or not.
     const providerId = getOnlineProviderIdForSong(song) ?? undefined;
     const level = providerId ? omni.resolveAudioQuality(providerId, audioQuality) : undefined;
+    // 仓库自带的歌先看这里：自带的那份音频就是整首，不必再问平台，也就不会因为账号只能试听而
+    // 只放 30 秒。放在读缓存之前，旧的试听片段不会顶在前面；读不出来才照常走平台。
+    const bundledUrl = bundledSongAudioUrl(providerId, song.id);
+    if (bundledUrl) {
+        const bundled = await loadBundledSongAudio(bundledUrl);
+        if (bundled) {
+            return { kind: 'ok', audioSrc: bundled.audioSrc, blobUrl: bundled.blobUrl, replayGain: song.replayGain };
+        }
+    }
     // A copy that failed to decode earlier in this session, or that the caller passes over, is not
     // read; a copy that cannot be read is logged and passed over: the platform is asked instead.
     const readCopy = async (atLevel?: AudioQualityPreference): Promise<Blob | null> => {

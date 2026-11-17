@@ -336,7 +336,7 @@ export default async function handler(req) {
         let jsonStr = content.trim();
         // Remove markdown code blocks if present
         if (jsonStr.startsWith('```')) {
-            jsonStr = jsonStr.replace(/^```(json)?\n/, '').replace(/\n```$/, '');
+            jsonStr = jsonStr.replace(/^```[A-Za-z0-9_-]*[ \t]*\n?/, '').replace(/\n?```\s*$/, '');
         }
         try {
             dualTheme = sanitizeDualTheme(JSON.parse(jsonStr));
