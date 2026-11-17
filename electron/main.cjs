@@ -104,6 +104,7 @@ const {
   resolveReleaseChannel,
 } = require('./updateChannels.cjs');
 const { discoverUpdateVersion, settleWithin } = require('./updateCheckMirrors.cjs');
+const { createUpdateDownloadPhase } = require('./updateDownloadPhase.cjs');
 const { resolveCacheLimit, selectEvictions } = require('./audioCachePrune.cjs');
 const { removeAudioCacheFileOfSize } = require('./audioCacheRemove.cjs');
 const { createAnalysisHost } = require('./analysis/host.cjs');
@@ -111,6 +112,7 @@ const { createAcousticsHost } = require('./acoustics/host.cjs');
 const { steamAudioLibraryPath } = require('./acoustics/phonon.cjs');
 const { createSceneScreenHost } = require('./scenes/screenCapture.cjs');
 const { createDebugHost, runtimeLine } = require('./debug/debugHost.cjs');
+const { createPerfCheckHost } = require('./perfCheck.cjs');
 const { createCrashLog, installCrashHandlers, flushPageStorage } = require('./debug/crashLog.cjs');
 const { measureLeftovers, removeDownloadedLeftovers } = require('./analysis/modelPaths.cjs');
 const { resolveLinuxPasswordStore } = require('./linuxPasswordStore.cjs');
@@ -2705,7 +2707,7 @@ const x11WallpaperWindows = new WeakSet();
 // and at right-[254px] (titlebar showing the fullscreen button), plus the media buttons that come
 // up to its left while click-through is on.
 const MAIN_WINDOW_CLICK_THROUGH_UNLOCK_HOTSPOT = {
-  width: 172,
+  width: 206,
   height: 40,
   rightInset: 206,
   topInset: 4,
@@ -3005,6 +3007,19 @@ const displaySleepBlocker = createDisplaySleepBlocker(powerSaveBlocker);
 // The developer debug module: the runtime log and the memory monitor, both switched from
 // Settings > Developer. Created BEFORE the analysis host, which logs through it.
 createDebugHost({ app, ipcMain, store, BrowserWindow, isTrustedSender: isFirstPartyWindowContents });
+// The performance check's window (electron/perfCheck.cjs, src/components/perfCheck/).
+const perfCheckHost = createPerfCheckHost({
+  app,
+  ipcMain,
+  BrowserWindow,
+  screen,
+  preloadPath: path.join(__dirname, 'preload.cjs'),
+  iconPath: APP_ICON_PATH,
+  loadAppEntry,
+  isolateFirstPartyWindow,
+  isFirstPartyWindowContents,
+  getMainWindow: () => mainWindow,
+});
 logLinuxVulkanChoice(linuxVulkan, linuxGraphicsMode);
 
 const analysisHost = createAnalysisHost({
@@ -4157,6 +4172,10 @@ function isPackagedUpdateRuntime() {
   return app.isPackaged && process.env.ELECTRON_DEV !== 'true' && process.env.NODE_ENV !== 'development';
 }
 
+// Which of the updater's downloads (only the changed blocks, or the whole installer) is running.
+const updateDownloadPhase = createUpdateDownloadPhase();
+let lastUpdateDownloadMode = null;
+
 const updateState = {
   status: 'idle',
   currentVersion: normalizeVersion(app.getVersion()),
@@ -4247,6 +4266,12 @@ function setupAutoUpdater() {
 
   updater.on('update-available', (info) => {
     const version = normalizeVersion(info?.version);
+    updateDownloadPhase.setInstaller(info);
+    if (updateState.status !== 'downloading') {
+      // No download running: the next one, started by the updater itself when auto-update is on, is new.
+      updateDownloadPhase.restart();
+      lastUpdateDownloadMode = null;
+    }
     setUpdateState({
       status: 'available',
       availableVersion: version || null,
@@ -4273,6 +4298,13 @@ function setupAutoUpdater() {
   });
 
   updater.on('download-progress', (progress) => {
+    const { mode, fallback } = updateDownloadPhase.phaseOf(progress);
+    if (mode !== null && mode !== lastUpdateDownloadMode) {
+      console.info(fallback
+        ? '[Updater] Differential download failed, downloading the full installer'
+        : `[Updater] Downloading the update: ${mode}`);
+      lastUpdateDownloadMode = mode;
+    }
     setUpdateState({
       status: 'downloading',
       error: null,
@@ -4280,6 +4312,8 @@ function setupAutoUpdater() {
         percent: typeof progress.percent === 'number' ? progress.percent : 0,
         transferred: progress.transferred,
         total: progress.total,
+        mode,
+        fallback,
       },
       githubFailed: false,
     });
@@ -4376,6 +4410,11 @@ async function downloadAvailableUpdate() {
   }
 
   try {
+    // The updater hands back the running download instead of starting another: only a new one starts over.
+    if (updateState.status !== 'downloading') {
+      updateDownloadPhase.restart();
+      lastUpdateDownloadMode = null;
+    }
     setUpdateState({ status: 'downloading', error: null, downloadProgress: null });
     await updater.downloadUpdate();
   } catch (error) {
@@ -6241,6 +6280,8 @@ function createWindow(options = {}) {
       }
       // The hidden YouTube Music sandbox window would otherwise keep the app from quitting.
       ytmSandbox.destroy();
+      // So would the performance check's window, still running its GPU work.
+      perfCheckHost.close();
       refreshTrayMenu();
     }
   });
@@ -8178,6 +8219,22 @@ ipcMain.handle('remote-control-send-command', (event, command) => {
 
   if (!mainWindow || mainWindow.isDestroyed()) {
     return false;
+  }
+
+  // The remote window's settings key: the settings open in the main window, so it comes up first,
+  // and must take clicks. As the wallpaper it sits under the desktop icons (or lets every click
+  // through on macOS), where a settings dialog could not be used: the key does nothing then.
+  if (command?.type === 'open-remote-settings') {
+    if (isX11WallpaperMode() || isWindowsWallpaperMode() || isMacWallpaperActive) {
+      console.info('[RemoteControl] Settings key ignored: the main window is the wallpaper');
+      return false;
+    }
+    if (mainWindowClickThroughEnabled) {
+      setMainWindowClickThroughEnabled(false);
+      console.info('[RemoteControl] Settings key turned main window click-through off');
+    }
+    focusMainWindow();
+    console.info('[RemoteControl] Settings key opened the remote settings page');
   }
 
   mainWindow.webContents.send('remote-control-command', command);

@@ -24,7 +24,8 @@ import { VISUALIZER_FRAME_RATE_OPTIONS } from "../../../../utils/frameRateLimite
 import { formatLyricRenderScale, LYRIC_RENDER_SCALES } from "../../../../utils/lyricRenderQuality";
 import { LYRIC_ANTIALIAS_LABEL_KEYS } from "../../../visualizer/renderQuality/LyricRenderQualityRows";
 import {
-  Group,
+  openPerfCheck } from '../../../perfCheck/openPerfCheck';
+import { Button, Group,
   Link,
   Reveal,
   Row,
@@ -83,6 +84,7 @@ const GLASS_DISTORTION = LIQUID_GLASS_DISTORTION_SUPPORTED;
 const GLASS_GPU_BLOCKED = LIQUID_GLASS_BLOCKED_BY_GPU_PREFERENCE;
 
 const O = {
+    perfCheck: option(PERFORMANCE, 'perfCheck', 'options.perfCheck', { electronOnly: true }),
   glassPreset: option(GLASS, "liquidGlassPreset", "options.liquidGlassPreset"),
   staticMode: option(
     PERFORMANCE,
@@ -229,112 +231,94 @@ const PRESET_LABEL_KEY: Record<LiquidGlassPresetId, string> = {
 };
 
 const GraphicsPage: React.FC = () => {
-  const { t } = useTranslation();
-  const { isDaylight } = useSettingsKitTheme();
-  const { isElectron } = useSettingsPage();
-
-  // 1. 保留主分支的代码格式，并合并你的液态玻璃 store
-  const theme = useThemeSettingsStore(
-    useShallow((state) => ({
-      staticMode: state.staticMode,
-      homeBackgroundOff: state.disableHomeDynamicBackground,
-      setStaticMode: state.handleToggleStaticMode,
-      setHomeBackgroundOff: state.handleToggleDisableHomeDynamicBackground,
-    })),
-  );
-  const nativeBlur = usePlayerChromeSettingsStore(
-    (state) => state.enablePlayerPageNativeBlur,
-  );
-  const setNativeBlur = usePlayerChromeSettingsStore(
-    (state) => state.handleTogglePlayerPageNativeBlur,
-  );
-  const backgroundThrottling = useDesktopSettingsStore(
-    (state) => state.backgroundThrottling,
-  );
-  const setBackgroundThrottling = useDesktopSettingsStore(
-    (state) => state.handleToggleBackgroundThrottling,
-  );
-
-  // 2. 融合 visualizer：加入主分支新增的 renderQuality 逻辑
-  const visualizer = useVisualizerSettingsStore(
-    useShallow((state) => ({
-      frameRate: state.visualizerFrameRate,
-      glowFix: state.glowBlurQuantize,
-      setFrameRate: state.handleSetVisualizerFrameRate,
-      setGlowFix: state.handleToggleGlowBlurQuantize,
-      renderQuality: state.lyricRenderQuality, // 新增：来自 main
-      setRenderQuality: state.handleSetLyricRenderQuality, // 新增：来自 main
-    })),
-  );
-  const motion = useMotionSettingsStore(
-    useShallow((state) => ({
-      surfaces: state.reducedMotionSurfaces,
-      followSystem: state.followSystemReducedMotion,
-      systemPrefers: state.systemPrefersReducedMotion,
-      setSurface: state.handleToggleReducedMotionSurface,
-      setFollowSystem: state.handleToggleFollowSystemReducedMotion,
-    })),
-  );
-
-  // 3. 保留你的液态玻璃设置 store
-  const glass = useLiquidGlassSettingsStore(
-    useShallow((state) => ({
-      strength: state.strength,
-      blur: state.blur,
-      sat: state.sat,
-      bend: state.bend,
-      gamma: state.gamma,
-      light: state.light,
-      jelly: state.jelly,
-      setStrength: state.handleSetLiquidGlassStrength,
-      setBlur: state.handleSetLiquidGlassBlur,
-      setSat: state.handleSetLiquidGlassSat,
-      setBend: state.handleSetLiquidGlassBend,
-      setGamma: state.handleSetLiquidGlassGamma,
-      setLight: state.handleSetLiquidGlassLight,
-      setJelly: state.handleSetLiquidGlassJelly,
-      setParams: state.handleSetLiquidGlassParams,
-    })),
-  );
-
-  // Native blur can drop frames on some GPUs, so switching it on asks first.
-  const [nativeBlurAsking, setNativeBlurAsking] = useState(false);
-  const frameRateLimited = visualizer.frameRate !== "off";
-
-  // 4. 保留你的液态玻璃预设计算逻辑
-  // 预设：画不了位移图的平台不列出通透/朦胧流体；按当前值高亮（那边强度与弯曲距离被钉死，只按模糊匹配）。
-  const presetOptions = LIQUID_GLASS_PRESETS.filter(
-    (preset) => !preset.needsDistortion || GLASS_DISTORTION,
-  ).map((preset) => ({
-    value: preset.id as string,
-    label: t(PRESET_LABEL_KEY[preset.id]),
-  }));
-  const activePreset =
-    LIQUID_GLASS_PRESETS.find((preset) =>
-      preset.needsDistortion && !GLASS_DISTORTION
-        ? false
-        : GLASS_DISTORTION
-          ? glass.strength === preset.strength &&
-            glass.blur === preset.blur &&
-            glass.bend === preset.bend
-          : glass.blur === preset.blur,
-    )?.id ?? "";
-  const applyPreset = (id: string) => {
-    const preset = LIQUID_GLASS_PRESETS.find(
-      (candidate) => candidate.id === id,
+    const { t } = useTranslation();
+    const { isDaylight } = useSettingsKitTheme();
+    const { isElectron } = useSettingsPage();
+    const theme = useThemeSettingsStore(useShallow(state => ({
+        staticMode: state.staticMode,
+        homeBackgroundOff: state.disableHomeDynamicBackground,
+        setStaticMode: state.handleToggleStaticMode,
+        setHomeBackgroundOff: state.handleToggleDisableHomeDynamicBackground,
+    })));
+    const nativeBlur = usePlayerChromeSettingsStore(state => state.enablePlayerPageNativeBlur);
+    const setNativeBlur = usePlayerChromeSettingsStore(state => state.handleTogglePlayerPageNativeBlur);
+    const backgroundThrottling = useDesktopSettingsStore(state => state.backgroundThrottling);
+    const setBackgroundThrottling = useDesktopSettingsStore(state => state.handleToggleBackgroundThrottling);
+    const visualizer = useVisualizerSettingsStore(useShallow(state => ({
+        frameRate: state.visualizerFrameRate,
+        glowFix: state.glowBlurQuantize,
+        setFrameRate: state.handleSetVisualizerFrameRate,
+        setGlowFix: state.handleToggleGlowBlurQuantize,
+        renderQuality: state.lyricRenderQuality,
+        setRenderQuality: state.handleSetLyricRenderQuality,
+    })));
+    const motion = useMotionSettingsStore(useShallow(state => ({
+        surfaces: state.reducedMotionSurfaces,
+        followSystem: state.followSystemReducedMotion,
+        systemPrefers: state.systemPrefersReducedMotion,
+        setSurface: state.handleToggleReducedMotionSurface,
+        setFollowSystem: state.handleToggleFollowSystemReducedMotion,
+    })));
+    const glass = useLiquidGlassSettingsStore(
+        useShallow((state) => ({
+            strength: state.strength,
+            blur: state.blur,
+            sat: state.sat,
+            bend: state.bend,
+            gamma: state.gamma,
+            light: state.light,
+            jelly: state.jelly,
+            setStrength: state.handleSetLiquidGlassStrength,
+            setBlur: state.handleSetLiquidGlassBlur,
+            setSat: state.handleSetLiquidGlassSat,
+            setBend: state.handleSetLiquidGlassBend,
+            setGamma: state.handleSetLiquidGlassGamma,
+            setLight: state.handleSetLiquidGlassLight,
+            setJelly: state.handleSetLiquidGlassJelly,
+            setParams: state.handleSetLiquidGlassParams,
+        })),
     );
-    if (preset) {
-      glass.setParams({
-        strength: preset.strength,
-        blur: preset.blur,
-        bend: preset.bend,
-      });
-    }
-  };
+    // 预设：画不了位移图的平台不列出通透/朦胧流体；按当前值高亮（那边强度与弯曲距离被钉死，只按模糊匹配）。
+    const presetOptions = LIQUID_GLASS_PRESETS.filter(
+        (preset) => !preset.needsDistortion || GLASS_DISTORTION,
+    ).map((preset) => ({
+        value: preset.id as string,
+        label: t(PRESET_LABEL_KEY[preset.id]),
+    }));
+    const activePreset =
+        LIQUID_GLASS_PRESETS.find((preset) =>
+            preset.needsDistortion && !GLASS_DISTORTION
+                ? false
+                : GLASS_DISTORTION
+                  ? glass.strength === preset.strength &&
+                    glass.blur === preset.blur &&
+                    glass.bend === preset.bend
+                  : glass.blur === preset.blur,
+        )?.id ?? "";
+    const applyPreset = (id: string) => {
+        const preset = LIQUID_GLASS_PRESETS.find(
+            (candidate) => candidate.id === id,
+        );
+        if (preset) {
+            glass.setParams({
+                strength: preset.strength,
+                blur: preset.blur,
+                bend: preset.bend,
+            });
+        }
+    };
+    // Native blur can drop frames on some GPUs, so switching it on asks first.
+    const [nativeBlurAsking, setNativeBlurAsking] = useState(false);
+    const frameRateLimited = visualizer.frameRate !== 'off';
 
   return (
       <>
         <Group def={PERFORMANCE}>
+                {isElectron && (
+                    <Row option={O.perfCheck} hint={t('options.perfCheckDesc')}>
+                        <Button onClick={() => openPerfCheck()}>{t('options.perfCheckRun')}</Button>
+                    </Row>
+                )}
           <Row option={O.staticMode} hint={t("options.enableStaticModeDesc")}>
             <Toggle checked={theme.staticMode} onChange={theme.setStaticMode} />
           </Row>

@@ -24,6 +24,7 @@ export const BUILTIN_VISUALIZER_MODES = [
     'karaoke',
     'lumiere',
     'machi',
+    'metaphor',
     'monet',
     'partita',
     'pendolo',

@@ -1,4 +1,4 @@
-import { Gift, Sparkles } from 'lucide-react';
+import { Atom, Gauge, Gift, Radio, Shuffle, Sparkles, WandSparkles } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { HomeViewTab } from '../../types';
 import blgChampionsBanner from '../../../assets/banners/blg-worlds-2026-champions.png?url';
@@ -20,7 +20,7 @@ type NewFeatureBanner = {
 
 type NewFeaturesRelease = {
     i18nKey: string;
-    /** 界面上写的版本（可以带渠道字母，如 0.7.29L）；不给就按 help 页的版本号显示。 */
+    /** 界面上写的版本（可以带渠道字母，如 0.7.29）；不给就按 help 页的版本号显示。 */
     displayVersion?: string;
     banner?: NewFeatureBanner;
     /** 重大更新：介绍上方显示「<代号> Update · 重大更新」标签；代号不翻译，文案在 help.majorUpdateLabel。
@@ -29,18 +29,23 @@ type NewFeaturesRelease = {
     features: NewFeatureCard[];
 };
 
-// Defines the current release's cards; their localized text lives under i18nKey in every locale.
+
 export const NEW_FEATURES_RELEASE: NewFeaturesRelease = {
-    i18nKey: 'releaseNotes.v0_7_28_9',
-    displayVersion: '0.7.29L',
+    i18nKey: 'releaseNotes.v0_7_29',
+    displayVersion: '0.7.29',
     banner: {
         imageUrl: blgChampionsBanner,
         targetTab: 'welfare',
-        i18nKey: 'releaseNotes.v0_7_28_9.banner',
+        i18nKey: 'releaseNotes.v0_7_29.banner',
     },
-    majorUpdate: { codename: 'Mimiambol', servicePack: 1 },
+    majorUpdate: { codename: 'Feynman' },
     features: [
+        { id: 'radioWall', icon: Radio },
+        { id: 'metaphor', icon: Atom },
+        { id: 'perfCheck', icon: Gauge },
         { id: 'blgWelfare', icon: Gift },
-        { id: 'preview0729', icon: Sparkles },
+        { id: 'shuffleSearch', icon: Shuffle },
+        { id: 'deluxePolish', icon: WandSparkles },
+        { id: 'moreDetails', icon: Sparkles },
     ],
 };
